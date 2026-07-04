@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accept Invite - Sports OS</title>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/auth.css">
+    <style>
+        .pw-requirements {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--color-muted);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .pw-requirements .req {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pw-requirements .req .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #E5E7EB;
+            flex-shrink: 0;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .pw-requirements .req.met .dot {
+            background: #16A34A;
+        }
+        .pw-requirements .req.met {
+            color: #16A34A;
+        }
+        .field-error {
+            font-size: 12px;
+            color: var(--color-danger);
+            margin-top: 6px;
+            display: none;
+        }
+        .field-error.show {
+            display: block;
+        }
+        .form-control.invalid {
+            border-color: var(--color-danger);
+        }
+        .readonly-info {
+            display: grid;
+            gap: 4px;
+            margin-bottom: 16px;
+        }
+        .readonly-info span {
+            color: var(--color-muted);
+            font-size: 13px;
+        }
+        .invite-details {
+            margin-bottom: 20px;
+            padding: 16px;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            background: #FAFAFA;
+        }
+        .invite-details p {
+            margin: 6px 0;
+            font-size: 14px;
+        }
+        .invite-details strong {
+            display: block;
+            font-size: 15px;
+            margin-top: 3px;
+            color: var(--color-dark);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-left">
+            <div class="logo-wrap">
+                <div class="logo-icon">🏆</div>
+                <div>
+                    <div class="logo-text">Sports OS</div>
+                    <div class="logo-subtitle">SPORTS ACADEMY</div>
+                </div>
+            </div>
+            <h1>Welcome to your academy.</h1>
+            <p class="auth-left-subtext">You were invited to join a team. Complete your account to get started.</p>
+            <ul class="feature-list">
+                <li><span class="feature-check">✓</span> Account creation by invite only</li>
+                <li><span class="feature-check">✓</span> Role, sport and academy pre-set</li>
+                <li><span class="feature-check">✓</span> Secure onboarding for coaches and athletes</li>
+            </ul>
+        </div>
+
+        <div class="auth-right">
+            <div class="auth-form-wrap">
+                <h2>Accept your invite</h2>
+                <p class="form-subtext">Fill in your details to join the academy as a team member.</p>
+
+                <div id="inviteErrorBlock" style="display:none;">
+                    <p class="error-message" id="inviteInvalidText"></p>
+                    <a href="login.html" class="text-link">Back to login</a>
+                </div>
+
+                <form id="inviteForm" novalidate>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-control" readonly>
+                    </div>
+
+                    <div class="invite-details">
+                        <div class="readonly-info">
+                            <span>Role</span>
+                            <strong id="inviteRole"></strong>
+                        </div>
+                        <div class="readonly-info">
+                            <span>Academy</span>
+                            <strong id="inviteAcademy"></strong>
+                        </div>
+                        <div class="readonly-info">
+                            <span>Sport</span>
+                            <strong id="inviteSport"></strong>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" class="form-control" required>
+                        <div class="field-error" id="nameError">Name must start with a letter and contain only letters, spaces, hyphens or apostrophes.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="password" name="password" class="form-control" required>
+                            <button type="button" class="show-password-btn" onclick="togglePassword('password')">👁</button>
+                        </div>
+                        <div class="pw-requirements" id="pwRequirements">
+                            <div class="req" data-rule="length"><span class="dot">✓</span> 8+ characters</div>
+                            <div class="req" data-rule="upper"><span class="dot">✓</span> Uppercase letter</div>
+                            <div class="req" data-rule="lower"><span class="dot">✓</span> Lowercase letter</div>
+                            <div class="req" data-rule="number"><span class="dot">✓</span> Number</div>
+                            <div class="req" data-rule="special"><span class="dot">✓</span> Special character (@$!%*?&)</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
+                            <button type="button" class="show-password-btn" onclick="togglePassword('confirmPassword')">👁</button>
+                        </div>
+                        <div class="field-error" id="confirmPasswordError">Passwords do not match.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="text" id="phone" name="phone" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dob">Date of Birth</label>
+                        <input type="date" id="dob" name="dob" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bloodGroup">Blood Group</label>
+                        <input type="text" id="bloodGroup" name="bloodGroup" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="emergencyContact">Emergency Contact</label>
+                        <input type="text" id="emergencyContact" name="emergencyContact" class="form-control">
+                    </div>
+
+                    <div class="form-group" id="specializationGroup" style="display:none;">
+                        <label for="specialization">Specialization</label>
+                        <input type="text" id="specialization" name="specialization" class="form-control" placeholder="Enter your specialization">
+                    </div>
+
+                    <div class="form-group" id="batchGroup" style="display:none;">
+                        <label for="batchAssigned">Batch Assigned</label>
+                        <input type="text" id="batchAssigned" name="batchAssigned" class="form-control" placeholder="e.g. U-16 Elite">
+                    </div>
+
+                    <div id="errorMessage" class="error-message"></div>
+                    <button type="submit" class="btn-primary" style="width:100%;margin-top:8px;">Join Academy</button>
+                </form>
+
+                <div class="auth-link-bottom" style="margin-top:18px;">
+                    Already registered? <a href="login.html">Sign In →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = `${window.location.origin}/api/invites`;
+        const nameRegex = /^[A-Za-z][A-Za-z\s'-]{1,49}$/;
+        const passwordRules = {
+            length: pw => pw.length >= 8,
+            upper: pw => /[A-Z]/.test(pw),
+            lower: pw => /[a-z]/.test(pw),
+            number: pw => /\d/.test(pw),
+            special: pw => /[@$!%*?&]/.test(pw),
+        };
+
+        function isStrongPassword(pw) {
+            return Object.values(passwordRules).every(fn => fn(pw));
+        }
+
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            field.type = field.type === 'password' ? 'text' : 'password';
+        }
+
+        document.getElementById('password').addEventListener('input', (e) => {
+            const pw = e.target.value;
+            Object.entries(passwordRules).forEach(([rule, fn]) => {
+                const el = document.querySelector(`.req[data-rule="${rule}"]`);
+                el.classList.toggle('met', fn(pw));
+            });
+        });
+
+        function showInviteError(message) {
+            document.getElementById('inviteForm').style.display = 'none';
+            const block = document.getElementById('inviteErrorBlock');
+            block.style.display = 'block';
+            document.getElementById('inviteInvalidText').textContent = message;
+        }
+
+        function setFieldError(inputId, errorId, show) {
+            document.getElementById(inputId).classList.toggle('invalid', show);
+            document.getElementById(errorId).classList.toggle('show', show);
+        }
+
+        async function loadInvite() {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            if (!token) {
+                showInviteError('Missing invite token.');
+                return null;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/${token}`);
+                if (!res.ok) {
+                    const data = await res.json();
+                    showInviteError(data.message || 'Invite link is invalid or has expired.');
+                    return null;
+                }
+
+                const invite = await res.json();
+                document.getElementById('email').value = invite.email;
+                document.getElementById('inviteRole').textContent = invite.role.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+                document.getElementById('inviteAcademy').textContent = invite.academyName;
+                document.getElementById('inviteSport').textContent = invite.sport.charAt(0).toUpperCase() + invite.sport.slice(1);
+
+                const specializationGroup = document.getElementById('specializationGroup');
+                const batchGroup = document.getElementById('batchGroup');
+                if (invite.role === 'coach' || invite.role === 'head_coach' || invite.role === 'athlete') {
+                    specializationGroup.style.display = 'block';
+                    const specializationPlaceholders = {
+                        cricket: 'e.g. Fast Bowling, Batting, Wicketkeeping',
+                        tennis: 'e.g. Serve & Volley, Baseline, Doubles',
+                        kabaddi: 'e.g. Raider, Defender, All-rounder',
+                    };
+                    document.getElementById('specialization').placeholder =
+                        specializationPlaceholders[invite.sport] || 'Enter your specialization';
+                }
+                if (invite.role === 'athlete') {
+                    batchGroup.style.display = 'block';
+                }
+
+                return token;
+            } catch (err) {
+                console.error('Error loading invite:', err);
+                showInviteError('Unable to load invite. Please try again later.');
+                return null;
+            }
+        }
+
+        document.getElementById('inviteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = '';
+
+            const token = new URLSearchParams(window.location.search).get('token');
+            const name = document.getElementById('name').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const phone = document.getElementById('phone').value.trim();
+            const dob = document.getElementById('dob').value;
+            const bloodGroup = document.getElementById('bloodGroup').value.trim();
+            const emergencyContact = document.getElementById('emergencyContact').value.trim();
+            const specialization = document.getElementById('specialization').value.trim();
+            const batchAssigned = document.getElementById('batchAssigned').value.trim();
+
+            let valid = true;
+            if (!nameRegex.test(name)) {
+                setFieldError('name', 'nameError', true);
+                valid = false;
+            } else {
+                setFieldError('name', 'nameError', false);
+            }
+
+            if (!isStrongPassword(password)) {
+                valid = false;
+                errorMessage.textContent = 'Password does not meet all requirements above.';
+            }
+
+            if (password !== confirmPassword) {
+                setFieldError('confirmPassword', 'confirmPasswordError', true);
+                valid = false;
+            } else {
+                setFieldError('confirmPassword', 'confirmPasswordError', false);
+            }
+
+            if (!valid) return;
+
+            try {
+                const response = await fetch(`${API_URL}/accept`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token,
+                        name,
+                        password,
+                        phone,
+                        specialization,
+                        dob,
+                        bloodGroup,
+                        emergencyContact,
+                        batchAssigned,
+                    }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    const userData = {
+                        ...(data.user || {}),
+                        token: data.token,
+                        sport: data.user?.sport || 'cricket',
+                    };
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    if (data.user?.role === 'athlete') {
+                        window.location.href = 'performance.html';
+                    } else {
+                        window.location.href = 'dashboard.html';
+                    }
+                } else {
+                    errorMessage.textContent = data.message || 'Unable to accept invite.';
+                }
+            } catch (err) {
+                console.error('Error accepting invite:', err);
+                errorMessage.textContent = 'An error occurred. Please try again.';
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadInvite();
+        });
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('SW registered'))
+                .catch(err => console.log('SW failed:', err));
+        }
+    </script>
+</body>
+
+</html>

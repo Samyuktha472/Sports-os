@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>My Attendance · Sports OS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/sidebar.css?v=3">
+</head>
+
+<body>
+    <div id="sidebar"></div>
+    <div class="main-content">
+        <p id="pageDate" class="page-date"></p>
+        <h1 class="page-title">My Attendance</h1>
+        <p style="color:#6B7280;margin-bottom:28px">Your attendance record for this month.</p>
+
+        <!-- Summary Cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+            <div class="card" style="text-align:center;padding:20px">
+                <div style="font-size:11px;font-weight:600;color:#6B7280;text-transform:uppercase;margin-bottom:8px">
+                    Total Sessions</div>
+                <div id="totalSessions" style="font-size:32px;font-weight:800">0</div>
+            </div>
+            <div class="card" style="text-align:center;padding:20px">
+                <div style="font-size:11px;font-weight:600;color:#6B7280;text-transform:uppercase;margin-bottom:8px">
+                    Present</div>
+                <div id="totalPresent" style="font-size:32px;font-weight:800;color:#16A34A">0</div>
+            </div>
+            <div class="card" style="text-align:center;padding:20px">
+                <div style="font-size:11px;font-weight:600;color:#6B7280;text-transform:uppercase;margin-bottom:8px">
+                    Absent</div>
+                <div id="totalAbsent" style="font-size:32px;font-weight:800;color:#DC2626">0</div>
+            </div>
+            <div class="card" style="text-align:center;padding:20px">
+                <div style="font-size:11px;font-weight:600;color:#6B7280;text-transform:uppercase;margin-bottom:8px">
+                    Attendance %</div>
+                <div id="attendancePct" style="font-size:32px;font-weight:800;color:#16A34A">0%</div>
+            </div>
+        </div>
+
+        <!-- Attendance Record -->
+        <div class="card">
+            <h3 id="recordTitle" style="font-size:16px;font-weight:700;margin-bottom:20px">📅 Attendance Record</h3>
+            <div id="attendanceList"></div>
+        </div>
+    </div>
+
+    <script src="../js/sidebar.js?v=4"></script>
+    <script>
+        const API_URL = `${window.location.origin}/api`;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) { window.location.href = 'login.html'; return; }
+
+            const now = new Date();
+            const weekday = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+            const day = now.getDate();
+            const month = now.toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
+            document.getElementById('pageDate').textContent = weekday + ' · ' + day + ' ' + month;
+
+            const monthName = now.toLocaleDateString('en-US', { month: 'long' });
+            const year = now.getFullYear();
+            document.getElementById('recordTitle').textContent = '📅 ' + monthName + ' ' + year + ' — Attendance Record';
+
+            try {
+                const res = await fetch(`${API_URL}/attendance/my`, {
+                    headers: { 'Authorization': 'Bearer ' + user.token }
+                });
+                const data = await res.json();
+
+                const records = Array.isArray(data) ? data : [];
+                const present = records.filter(r => r.status === 'present').length;
+                const absent = records.filter(r => r.status === 'absent').length;
+                const pct = records.length > 0 ? Math.round((present / records.length) * 100) : 0;
+
+                document.getElementById('totalSessions').textContent = records.length;
+                document.getElementById('totalPresent').textContent = present;
+                document.getElementById('totalAbsent').textContent = absent;
+                document.getElementById('attendancePct').textContent = pct + '%';
+                document.getElementById('attendancePct').style.color = pct >= 75 ? '#16A34A' : '#DC2626';
+
+                const list = document.getElementById('attendanceList');
+
+                if (records.length === 0) {
+                    list.innerHTML = '<p style="color:#6B7280;text-align:center;padding:24px">No attendance records found.</p>';
+                    return;
+                }
+
+                list.innerHTML = records.map(function (r) {
+                    const isPresent = r.status === 'present';
+                    const badgeBg = isPresent ? '#DCFCE7' : '#FEE2E2';
+                    const badgeColor = isPresent ? '#16A34A' : '#DC2626';
+                    const badgeText = isPresent ? '✓ Present' : '✗ Absent';
+
+                    const dateObj = new Date(r.date || r.sessionDate);
+                    const dayNum = dateObj.getDate();
+                    const monthShort = dateObj.toLocaleDateString('en-US', { month: 'short' });
+                    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                    const sessionName = r.sessionName || r.topic || 'Session';
+
+                    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #F3F4F6">'
+                        + '<div style="display:flex;align-items:center;gap:16px">'
+                        + '<div style="text-align:center;min-width:48px">'
+                        + '<div style="font-size:18px;font-weight:700">' + dayNum + '</div>'
+                        + '<div style="font-size:11px;color:#6B7280">' + monthShort + '</div>'
+                        + '</div>'
+                        + '<div>'
+                        + '<div style="font-weight:600">' + sessionName + '</div>'
+                        + '<div style="font-size:12px;color:#6B7280">' + dayName + '</div>'
+                        + '</div></div>'
+                        + '<span style="padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;background:' + badgeBg + ';color:' + badgeColor + '">' + badgeText + '</span>'
+                        + '</div>';
+                }).join('');
+
+            } catch (err) {
+                document.getElementById('attendanceList').innerHTML = '<p style="color:#DC2626;text-align:center;padding:24px">Failed to load attendance data.</p>';
+            }
+        });
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('SW registered'))
+                .catch(err => console.log('SW failed:', err));
+        }
+    </script>
+</body>
+
+</html>
