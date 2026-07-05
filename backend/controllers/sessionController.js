@@ -2,7 +2,22 @@ const Session = require('../models/Session');
 
 exports.logSession = async (req, res) => {
     try {
-        const { drillType, sessionDate, coachNotes, batch, loggedBy, voiceNoteUrl } = req.body;
+
+        // Only Head Coach can create sessions with voice notes
+        if (req.user.role !== 'head_coach') {
+            return res.status(403).json({
+                message: 'Only Head Coach can log training sessions.'
+            });
+        }
+
+        const {
+            drillType,
+            sessionDate,
+            coachNotes,
+            batch,
+            loggedBy,
+            voiceNoteUrl
+        } = req.body;
 
         const session = new Session({
             drillType,
@@ -16,13 +31,19 @@ exports.logSession = async (req, res) => {
         });
 
         await session.save();
+
         res.status(201).json(session);
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-
 exports.getSessions = async (req, res) => {
+    if (req.user.role === 'owner') {
+    return res.status(403).json({
+        message: 'Owners cannot access session voice logs.'
+    });
+}
     try {
         const { batchId, date } = req.query;
         const filters = {};
@@ -52,6 +73,11 @@ exports.getSessions = async (req, res) => {
 };
 
 exports.getSessionById = async (req, res) => {
+    if (req.user.role === 'owner') {
+    return res.status(403).json({
+        message: 'Owners cannot access session voice logs.'
+    });
+}
     try {
         const session = await Session.findById(req.params.id)
             .populate('loggedBy', 'name')
