@@ -102,10 +102,9 @@
             <form id="addFeeForm" class="fee-form" style="display:none;">
                 <div class="fee-form-grid">
                     <div class="form-group">
-                       <div class="form-group">
-                        <label class="filter-label">Athlete Name</label>
-                        <input type="text" id="feeMonthInput" class="form-control" placeholder="e.g. John Doe" required>
-                    </div>
+                        <label class="filter-label">ATHLETE</label>
+                        <input type="text" id="feeAthleteSelect" class="form-control" placeholder="e.g. John Doe"
+                            required>
                     </div>
                     <div class="form-group">
                         <label class="filter-label">FEE MONTH</label>
@@ -147,21 +146,9 @@
 
     </div><!-- end .main-content -->
 
-    <script src="../js/sidebar.js?v=4"></script>
+    <script src="../js/sidebar.js?v=3"></script>
     <script src="../js/fees.js"></script>
     <script>
-        (function() {
-            const allowedRoles = ['owner', 'head_coach', 'coach'];
-            const user = JSON.parse(localStorage.getItem('user') || 'null');
-            const role = user?.role;
-            if (!user || !role) {
-                window.location.href = 'login.html';
-                return;
-            }
-            if (!allowedRoles.includes(role)) {
-                window.location.href = role === 'athlete' ? 'performance.html' : 'dashboard.html';
-            }
-        })();
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
                 .then(() => console.log('SW registered'))
