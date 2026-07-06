@@ -1,4 +1,4 @@
-const API_BASE_URL = `${window.location.origin}/api`;
+const API_BASE_URL = 'http://localhost:5005/api';
 
 function getToken() {
     const user = JSON.parse(localStorage.getItem('user'));

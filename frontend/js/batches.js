@@ -245,6 +245,10 @@ async function onBatchOrDateChange() {
 
     if (!selectedBatch) return;
 
+    if (getStoredUser()?.role === 'owner' && allCoaches.length) {
+        renderCoachAttendanceList(getCoachesForSelectedBatch());
+    }
+
     attendanceState = {};
     renderAthleteList(selectedBatch.athletes);
     updateBatchLabel();
@@ -373,6 +377,17 @@ function showToast(message, type) {
 let allCoaches = [];
 let coachAttendanceState = {};
 
+function getCoachesForSelectedBatch() {
+    if (!selectedBatch) return allCoaches;
+    if (!Array.isArray(allCoaches) || !allCoaches.length) return [];
+
+    const targetCoachId = selectedBatch.coachId?._id || selectedBatch.coachId;
+    if (!targetCoachId) return [];
+
+    const matchedCoach = allCoaches.find(c => c._id === targetCoachId);
+    return matchedCoach ? [matchedCoach] : [];
+}
+
 function getCoachCounterEls() {
     return {
         present: document.getElementById('coachPresentCount'),
@@ -401,17 +416,17 @@ function applyCoachRowState(row, status) {
     row.classList.add(status);
 }
 
-function renderCoachAttendanceList() {
+function renderCoachAttendanceList(coaches = allCoaches) {
     const container = document.getElementById('coachAttendanceList');
     if (!container) return;
 
-    if (!allCoaches.length) {
+    if (!coaches.length) {
         container.innerHTML = `<p style="color:#6B7280;padding:20px 0;">No coaches found yet.</p>`;
         updateCoachCounters();
         return;
     }
 
-    container.innerHTML = allCoaches.map(c => `
+    container.innerHTML = coaches.map(c => `
         <div class="athlete-row" data-coach-id="${c._id}">
             <div class="athlete-info">
                 <div class="athlete-avatar">${getInitials(c.name)}</div>
@@ -440,8 +455,8 @@ function renderCoachAttendanceList() {
         });
     });
 
-    // Default everyone to present unless we load existing data for the day
-    allCoaches.forEach(c => {
+    // Default visible coaches to present unless we load existing data for the day
+    coaches.forEach(c => {
         if (!coachAttendanceState[c._id]) coachAttendanceState[c._id] = 'present';
     });
 
@@ -490,7 +505,7 @@ async function onCoachAttendanceDateChange() {
         console.log('No existing coach attendance found for this date.');
     }
 
-    renderCoachAttendanceList();
+    renderCoachAttendanceList(getCoachesForSelectedBatch());
     loadCoachAttendanceHistory();
 }
 
@@ -540,7 +555,8 @@ async function saveCoachAttendance() {
     const dateInput = document.getElementById('coachAttendanceDate');
     const date = dateInput?.value || new Date().toISOString().split('T')[0];
 
-    const records = allCoaches.map(c => ({
+    const visibleCoaches = getCoachesForSelectedBatch();
+    const records = visibleCoaches.map(c => ({
         coach: c._id,
         coachName: c.name,
         status: coachAttendanceState[c._id] || 'present',

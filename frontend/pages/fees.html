@@ -102,9 +102,16 @@
             <form id="addFeeForm" class="fee-form" style="display:none;">
                 <div class="fee-form-grid">
                     <div class="form-group">
+                        <label class="filter-label">BATCH</label>
+                        <select id="feeBatchSelect" class="form-control" required>
+                            <option value="">Select batch</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label class="filter-label">ATHLETE</label>
-                        <input type="text" id="feeAthleteSelect" class="form-control" placeholder="e.g. John Doe"
-                            required>
+                        <select id="feeAthleteSelect" class="form-control" required disabled>
+                            <option value="">Select batch first</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="filter-label">FEE MONTH</label>

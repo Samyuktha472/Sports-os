@@ -272,7 +272,7 @@
 }
 
 .fee-form-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 10px;
     margin-bottom: 10px;
 }
@@ -295,6 +295,41 @@
 /* Compact the table rows */
 .fee-row {
     padding: 10px 4px;
+}
+
+.fee-batch-group {
+    margin-top: 20px;
+}
+
+.fee-batch-group:first-child {
+    margin-top: 0;
+}
+
+.fee-batch-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #E5E7EB;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-dark);
+}
+
+.fee-batch-count {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #F3F4F6;
+    color: #6B7280;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .fee-table-header {
@@ -393,11 +428,6 @@
 .fee-badge.paid {
     background: #DCFCE7;
     color: #16A34A;
-}
-
-.fee-badge.late {
-    background: #FEE2E2;
-    color: #DC2626;
 }
 
 .edit-fee-btn {
