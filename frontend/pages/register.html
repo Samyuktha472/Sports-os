@@ -99,6 +99,23 @@
                         <input type="email" id="email" name="email" class="form-control" required>
                         <div class="field-error" id="emailError">Enter a valid email address (e.g. name@example.com).</div>
                     </div>
+                    <div class="form-group">
+    <label for="mobile">Mobile Number</label>
+<input
+    type="tel"
+    id="mobile"
+    name="mobile"
+    class="form-control"
+    placeholder="Enter 10-digit mobile number"
+    maxlength="10"
+    inputmode="numeric"
+    required
+    oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
+
+<div class="field-error" id="mobileError">
+    Mobile number must contain exactly 10 digits.
+</div>
+</div>
 
                     <div class="form-group">
                         <label>Sport</label>
@@ -214,8 +231,10 @@ function selectSport(sport) {
             const academyName = document.getElementById('academyName').value.trim();
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
+            const mobile = document.getElementById('mobile').value.trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
+
 
             let valid = true;
 
@@ -251,6 +270,12 @@ function selectSport(sport) {
             } else {
                 setFieldError('confirmPassword', 'confirmPasswordError', false);
             }
+     if (!/^\d{10}$/.test(mobile)) {
+    setFieldError('mobile', 'mobileError', true);
+    valid = false;
+} else {
+    setFieldError('mobile', 'mobileError', false);
+}
 
             if (!valid) return;
 
@@ -259,13 +284,14 @@ function selectSport(sport) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        name,
-                        email,
-                        password,
-                        academyName,
-                        sports: selectedSports,
-                        role: 'owner', // only owners self-register
-                    }),
+    name,
+    email,
+    mobile,
+    password,
+    academyName,
+    sports: selectedSports,
+    role: 'owner',
+}),
                 });
 
                 const data = await response.json();
