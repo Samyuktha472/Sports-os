@@ -84,19 +84,19 @@
                 <form id="registerForm" novalidate>
                     <div class="form-group">
                         <label for="academyName">Academy Name</label>
-                        <input type="text" id="academyName" name="academyName" class="form-control" required minlength="3" maxlength="80">
+                        <input type="text" id="academyName" name="academyName" class="form-control" placeholder="Enter your Academy Name" required minlength="3" maxlength="80">
                         <div class="field-error" id="academyNameError">Academy name must be at least 3 characters.</div>
                     </div>
 
                     <div class="form-group">
                         <label for="name">Your Full Name</label>
-                        <input type="text" id="name" name="name" class="form-control" required>
+                        <input type="text" id="name" name="name" class="form-control" placeholder="Enter your name" required>
                         <div class="field-error" id="nameError">Name must start with a letter and contain only letters, spaces, hyphens or apostrophes.</div>
                     </div>
 
                     <div class="form-group">
                         <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" class="form-control" required>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
                         <div class="field-error" id="emailError">Enter a valid email address (e.g. name@example.com).</div>
                     </div>
                     <div class="form-group">
@@ -129,7 +129,7 @@
                                 <div class="role-name">Tennis</div>
                             </div>
                             <div class="role-card" data-sport="kabaddi" onclick="selectSport('kabaddi')">
-                                <span class="role-icon">🤾</span>
+                                <span class="role-icon">🤼‍♂️</span>
                                 <div class="role-name">Kabaddi</div>
                             </div>
                         </div>
@@ -138,7 +138,7 @@
                     <div class="form-group">
                         <label for="password">Password</label>
                         <div class="password-wrapper">
-                            <input type="password" id="password" name="password" class="form-control" required>
+                            <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" required>
                             <button type="button" class="show-password-btn" onclick="togglePassword('password')">👁</button>
                         </div>
                         <div class="pw-requirements" id="pwRequirements">
