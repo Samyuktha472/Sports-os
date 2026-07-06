@@ -188,15 +188,16 @@
         }
 
         if (googleAuth) {
-            const params = new URLSearchParams(decodeURIComponent(googleAuth));
-            const userData = {
-                token: params.get('token'),
-                id: params.get('id'),
-                name: params.get('name'),
-                email: params.get('email'),
-                role: params.get('role'),
-                sport: params.get('sport'),
-            };
+    const params = new URLSearchParams(decodeURIComponent(googleAuth));
+    const userData = {
+        token: params.get('token'),
+        id: params.get('id'),
+        name: params.get('name'),
+        email: params.get('email'),
+        role: params.get('role'),
+        sport: params.get('sport'),
+        academyName: params.get('academyName') || '',
+    };
             if (!userData.sport) {
                 console.warn('[Login][Google] missing sport in OAuth callback for', userData.email, 'role', userData.role);
             }

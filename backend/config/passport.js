@@ -9,20 +9,11 @@ passport.use(new GoogleStrategy({
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const email = profile.emails[0].value;
-        let user = await User.findOne({ email });
+        const user = await User.findOne({ email });
 
-        if (user) {
-            return done(null, user);
+        if (!user) {
+            return done(null, false, { message: 'No account found for this Google email. Please use your invite link to register.' });
         }
-
-        user = await User.create({
-            name: profile.displayName,
-            email,
-            password: `google_${profile.id}_${Date.now()}`,
-            role: 'athlete',
-            sport: '',
-            googleId: profile.id,
-        });
 
         return done(null, user);
     } catch (err) {
