@@ -8,71 +8,136 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sports OS - Resource Management</title>
+
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/sidebar.css?v=3">
     <link rel="stylesheet" href="../css/resources.css">
 </head>
 
 <body>
+
     <div id="sidebar"></div>
 
     <div class="main-content">
+
         <header class="page-header">
             <div>
                 <p class="page-meta" id="pageDate">TUESDAY · 16 JUNE</p>
                 <h1 class="page-title">Resource Management</h1>
-                <p class="page-subtitle">Facilities, equipment and academy resources — all in one place.</p>
+                <p class="page-subtitle">
+                    Facilities, equipment and academy resources — all in one place.
+                </p>
             </div>
-            <div class="page-context">Field Mode · Tablet ready</div>
+
+            <div class="page-context">
+                Field Mode · Tablet ready
+            </div>
         </header>
 
         <div class="resources-grid">
+
             <div class="left-column">
+
+                <!-- Facility Section -->
                 <section class="facility-card">
+
                     <div class="section-header">
+
                         <div>
                             <h2>📍 Facility Allocation</h2>
                         </div>
-                        <div class="section-meta">Today</div>
+
+                        <div>
+                            <button id="addFacilityBtn">
+                                + Add Facility
+                            </button>
+                        </div>
+
                     </div>
-                    <!-- Filled dynamically by JS based on sport -->
+
+                    <!-- Add Facility Form -->
+                    <div id="facilityForm" style="display:none; margin:15px 0;">
+
+                        <input
+                            type="text"
+                            id="facilityName"
+                            placeholder="Enter Facility Name"
+                            style="padding:8px;width:250px;"
+                        >
+
+                        <button id="saveFacility">
+                            Save
+                        </button>
+
+                    </div>
+
+                    <!-- Facility Cards -->
                     <div class="facility-grid" id="facilityGrid"></div>
+
                 </section>
 
+                <!-- Equipment -->
                 <section class="equipment-card-section">
+
                     <div class="section-header">
+
                         <div>
                             <h2>🎒 Equipment Inventory</h2>
                         </div>
-                        <div class="section-meta">Tap +/- to adjust stock</div>
+
+                        <div class="section-meta">
+                            Tap +/- to adjust stock
+                        </div>
+
                     </div>
+
                     <div class="equipment-grid" id="equipmentGrid"></div>
+
                 </section>
+
             </div>
+
         </div>
+
     </div>
 
     <script src="../js/sidebar.js?v=4"></script>
     <script src="../js/resources.js"></script>
+
     <script>
-        (function() {
+
+        (function () {
+
             const allowedRoles = ['owner', 'head_coach', 'coach'];
+
             const user = JSON.parse(localStorage.getItem('user') || 'null');
+
             const role = user?.role;
+
             if (!user || !role) {
                 window.location.href = 'login.html';
                 return;
             }
+
             if (!allowedRoles.includes(role)) {
-                window.location.href = role === 'athlete' ? 'performance.html' : 'dashboard.html';
+                window.location.href =
+                    role === 'athlete'
+                        ? 'performance.html'
+                        : 'dashboard.html';
             }
+
         })();
+
         if ('serviceWorker' in navigator) {
+
             navigator.serviceWorker.register('/sw.js')
                 .then(() => console.log('SW registered'))
                 .catch(err => console.log('SW failed:', err));
+
         }
+
     </script>
+
 </body>
 
 </html>

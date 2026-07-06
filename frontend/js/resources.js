@@ -109,39 +109,113 @@ const SPORT_FACILITIES = {
 };
 
 function renderFacilities() {
-    const sport = getSport();
-    const facilities = SPORT_FACILITIES[sport] || SPORT_FACILITIES.cricket;
-    const grid = document.getElementById('facilityGrid');
+
+    const facilities = customFacilities;
+
+    const grid = document.getElementById("facilityGrid");
+
     if (!grid) return;
 
-    grid.innerHTML = facilities.map(facility => `
-        <div class="facility-card-inner">
-            <h3>${facility.name}</h3>
-            ${facility.slots.map(slot => `
-                <div class="slot-row">
-                    <span class="slot-time">${slot.time}</span>
-                    <span class="slot-name">${slot.name}</span>
-                    <span class="slot-badge ${slot.badge}">${slot.label}</span>
-                </div>
-            `).join('')}
-            <button class="add-slot-btn" data-net="${facility.key}">+ Add Slot</button>
-            <form class="slot-form" data-net-form="${facility.key}" style="display:none;">
-                <div class="slot-form-row">
-                    <input type="time" class="slot-input" placeholder="Time" required>
-                    <input type="text" class="slot-input" placeholder="Name" required>
-                    <select class="slot-select">
-                        ${facility.options.map(o => `<option value="${o}">${o}</option>`).join('')}
-                    </select>
-                </div>
-                <button type="button" class="btn-primary slot-submit">Save Slot</button>
-            </form>
-        </div>
-    `).join('');
+    if (facilities.length === 0) {
 
-    setupSlotForms();
+        grid.innerHTML = `
+        <div class="empty-state">
+            No facilities available.
+            Please add a facility.
+        </div>`;
+
+        return;
+    }
+
+    grid.innerHTML = facilities.map(facility => `
+
+        <div class="facility-card-inner">
+
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+    <h3>${facility.name}</h3>
+
+    <button
+    class="delete-facility-btn"
+    data-name="${facility.name}"
+    style="
+        background:none;
+        border:none;
+        font-size:20px;
+        cursor:pointer;
+    ">
+    🗑
+</button>
+</div>
+            ${(facility.slots || []).map((slot, index) => `
+                <div class="slot-row">
+    <span class="slot-time">${slot.time}</span>
+    <span class="slot-name">${slot.name}</span>
+    <span class="slot-badge ${slot.badge}">
+        ${slot.label}
+    </span>
+
+    <button
+    class="delete-slot-btn"
+    data-facility="${facility.name}"
+    data-index="${index}">
+    🗑
+</button>
+</div>
+            `).join("")}
+
+            <button class="add-slot-btn"
+                data-net="${facility.key}">
+                + Add Slot
+            </button>
+
+            <form class="slot-form"
+                data-net-form="${facility.key}"
+                style="display:none;">
+
+                <div class="slot-form-row">
+
+                    <input
+                        type="time"
+                        class="slot-input"
+                        required>
+
+                    <input
+                        type="text"
+                        class="slot-input"
+                        placeholder="Name"
+                        required>
+
+                    <select class="slot-select">
+
+                        <option>FREE</option>
+                        <option>MATCH</option>
+                        <option>TRAINING</option>
+
+                    </select>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-primary slot-submit">
+
+                    Save Slot
+
+                </button>
+
+            </form>
+
+        </div>
+
+    `).join("");
+
+  setupSlotForms();
+setupDeleteButtons();
+setupDeleteFacilityButtons();
 }
 
 const resourcesState = { equipment: [] };
+const customFacilities = JSON.parse(localStorage.getItem("facilities")) || [];
 
 function openResourceForm() { document.getElementById('resourceForm').style.display = 'block'; }
 function closeResourceForm() {
@@ -245,12 +319,89 @@ function setupSlotForms() {
                 <span class="slot-time">${timeInput.value}</span>
                 <span class="slot-name">${nameInput.value}</span>
                 <span class="slot-badge ${select.value.toLowerCase()}">${select.value}</span>`;
-            parentCard.insertBefore(row, form);
-            form.style.display = 'none';
-            timeInput.value = '';
-            nameInput.value = '';
+           parentCard.insertBefore(row, form);
+
+const facilityName = parentCard.querySelector("h3").textContent;
+
+const facility = customFacilities.find(f => f.name === facilityName);
+
+if (facility) {
+    facility.slots.push({
+        time: timeInput.value,
+        name: nameInput.value,
+        badge: select.value.toLowerCase(),
+        label: select.value
+    });
+
+    localStorage.setItem("facilities", JSON.stringify(customFacilities));
+}
+
+form.style.display = "none";
+timeInput.value = "";
+nameInput.value = "";
         });
     });
+}
+
+function setupDeleteButtons() {
+
+    document.querySelectorAll(".delete-slot-btn").forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            const facilityName = button.dataset.facility;
+            const index = Number(button.dataset.index);
+
+            const facility = customFacilities.find(
+                f => f.name === facilityName
+            );
+
+            if (!facility) return;
+
+            facility.slots.splice(index, 1);
+
+            localStorage.setItem(
+                "facilities",
+                JSON.stringify(customFacilities)
+            );
+
+            renderFacilities();
+
+        });
+
+    });
+
+}
+
+function setupDeleteFacilityButtons() {
+
+    document.querySelectorAll(".delete-facility-btn").forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            if (!confirm("Delete this facility?")) return;
+
+            const facilityName = button.dataset.name;
+
+            const index = customFacilities.findIndex(
+                f => f.name === facilityName
+            );
+
+            if (index === -1) return;
+
+            customFacilities.splice(index, 1);
+
+            localStorage.setItem(
+                "facilities",
+                JSON.stringify(customFacilities)
+            );
+
+            renderFacilities();
+
+        });
+
+    });
+
 }
 
 async function fetchResources() {
@@ -292,6 +443,30 @@ async function patchResource(id, update) {
     }
 }
 
+function saveFacility() {
+
+    const name = document.getElementById('facilityName').value.trim();
+
+    if (!name) {
+        alert('Please enter a facility name');
+        return;
+    }
+
+    customFacilities.push({
+        name,
+        key: name.toLowerCase().replace(/\s+/g, '-'),
+        slots: [],
+        options: ['FREE']
+    });
+    localStorage.setItem("facilities", JSON.stringify(customFacilities));
+
+    document.getElementById('facilityName').value = '';
+    document.getElementById('facilityForm').style.display = 'none';
+
+    renderFacilities();
+    
+}
+
 function getTodayHeader() {
     const now = new Date();
     const weekday = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
@@ -308,6 +483,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('addResourceBtn')?.addEventListener('click', openResourceForm);
     document.getElementById('cancelResourceBtn')?.addEventListener('click', closeResourceForm);
     document.getElementById('resourceFormSubmit')?.addEventListener('submit', createResource);
+// Open Add Facility Form
+document.getElementById('addFacilityBtn')?.addEventListener('click', () => {
+    document.getElementById('facilityForm').style.display = 'block';
+});
+document.getElementById('saveFacility')?.addEventListener('click', saveFacility);
 
     renderFacilities();
     fetchResources();
