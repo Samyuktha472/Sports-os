@@ -185,9 +185,10 @@
 
                     <div class="form-group" id="specializationGroup" style="display:none;">
                         <label for="specialization">Specialization</label>
-                        <input type="text" id="specialization" name="specialization" class="form-control" placeholder="Enter your specialization">
+                        <select id="specialization" name="specialization" class="form-control">
+                            <option value="">-- Select specialization --</option>
+                         </select>
                     </div>
-
                     <div class="form-group" id="batchGroup" style="display:none;">
                         <label for="batchAssigned">Batch Assigned</label>
                         <input type="text" id="batchAssigned" name="batchAssigned" class="form-control" placeholder="e.g. U-16 Elite">
@@ -270,13 +271,15 @@
                 const batchGroup = document.getElementById('batchGroup');
                 if (invite.role === 'coach' || invite.role === 'head_coach' || invite.role === 'athlete') {
                     specializationGroup.style.display = 'block';
-                    const specializationPlaceholders = {
-                        cricket: 'e.g. Fast Bowling, Batting, Wicketkeeping',
-                        tennis: 'e.g. Serve & Volley, Baseline, Doubles',
-                        kabaddi: 'e.g. Raider, Defender, All-rounder',
-                    };
-                    document.getElementById('specialization').placeholder =
-                        specializationPlaceholders[invite.sport] || 'Enter your specialization';
+                    const specializationOptions = {
+                        cricket: ['Batting', 'Bowling - Pace', 'Bowling - Spin', 'All-rounder', 'Wicketkeeping', 'Top Order', 'Middle Order'],
+                        tennis: ['Serve & Volley', 'Baseline', 'Doubles Specialist', 'All-court', 'Singles'],
+                        kabaddi: ['Raider', 'Defender', 'All-rounder', 'Corner Defender', 'Cover Defender'],
+            };
+            const options = specializationOptions[invite.sport] || [];
+            const sel = document.getElementById('specialization');
+            sel.innerHTML = '<option value="">-- Select specialization --</option>' +
+                options.map(o => `<option value="${o}">${o}</option>`).join('');
                 }
                 if (invite.role === 'athlete') {
                     batchGroup.style.display = 'block';

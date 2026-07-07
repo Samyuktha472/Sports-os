@@ -44,12 +44,22 @@ exports.getPerformanceData = async (req, res) => {
         const performance = await Performance.find(filters).sort({ recordedDate: 1 });
 
         if (!performance.length) {
-            const fallback = mockData[metric] || Object.values(mockData)[0];
+            // Only fall back to demo data for generic queries (no specific athlete).
+            // A real athlete with no recorded data yet should see "no data", not fake numbers.
+            if (!athleteId) {
+                const fallback = mockData[metric] || Object.values(mockData)[0];
+                return res.status(200).json({
+                    records: fallback.records,
+                    benchmark: fallback.benchmark,
+                    athlete: fallback.athlete,
+                    metric: fallback.metric,
+                });
+            }
             return res.status(200).json({
-                records: fallback.records,
-                benchmark: fallback.benchmark,
-                athlete: fallback.athlete,
-                metric: fallback.metric,
+                records: [],
+                benchmark: null,
+                athlete: athleteId,
+                metric: metric || null,
             });
         }
 

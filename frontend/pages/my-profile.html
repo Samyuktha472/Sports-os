@@ -324,7 +324,7 @@
                     <div>
                         <div style="font-size:11px;font-weight:600;color:#6B7280;
                         text-transform:uppercase;margin-bottom:4px">Coach</div>
-                        <div style="font-weight:600">Coach R. Shastri</div>
+                        <div id="infoCoach" style="font-weight:600">—</div>
                     </div>
                 </div>
             </div>
@@ -334,27 +334,27 @@
                 <h3 style="font-size:16px;font-weight:700;margin-bottom:16px">📈 Performance Summary</h3>
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
                     <div style="background:#F9FAFB;border-radius:8px;padding:16px;text-align:center">
-                        <div style="font-size:11px;font-weight:600;color:#6B7280;
-                        text-transform:uppercase;margin-bottom:8px">Strike Rate</div>
-                        <div style="font-size:28px;font-weight:800;color:#16A34A">162</div>
-                        <div style="font-size:11px;color:#16A34A">↑ Above target</div>
+                        <div id="perfLabel1" style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:8px">—</div>
+                        <div id="perfValue1" style="font-size:28px;font-weight:800">—</div>
+                        <div id="perfSub1" style="font-size:11px;color:#6B7280">No data yet</div>
                     </div>
                     <div style="background:#F9FAFB;border-radius:8px;padding:16px;text-align:center">
-                        <div style="font-size:11px;font-weight:600;color:#6B7280;
-                        text-transform:uppercase;margin-bottom:8px">Average</div>
-                        <div style="font-size:28px;font-weight:800">48</div>
-                        <div style="font-size:11px;color:#6B7280">Last 5 innings</div>
+                        <div id="perfLabel2" style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:8px">—</div>
+                        <div id="perfValue2" style="font-size:28px;font-weight:800">—</div>
+                        <div id="perfSub2" style="font-size:11px;color:#6B7280">No data yet</div>
                     </div>
                     <div style="background:#F9FAFB;border-radius:8px;padding:16px;text-align:center">
                         <div style="font-size:11px;font-weight:600;color:#6B7280;
                         text-transform:uppercase;margin-bottom:4px">Attendance</div>
-                        <div style="font-size:28px;font-weight:800;color:#16A34A">92%</div>
+                        <div id="perfAttendance" style="font-size:28px;font-weight:800;color:#16A34A">—</div>
                         <div style="font-size:11px;color:#6B7280">This month</div>
                     </div>
                     <div style="background:#F9FAFB;border-radius:8px;padding:16px;text-align:center">
                         <div style="font-size:11px;font-weight:600;color:#6B7280;
                         text-transform:uppercase;margin-bottom:8px">Sessions</div>
-                        <div style="font-size:28px;font-weight:800">14</div>
+                        <div id="perfSessions" style="font-size:28px;font-weight:800">—</div>
                         <div style="font-size:11px;color:#6B7280">This month</div>
                     </div>
                 </div>
@@ -417,6 +417,7 @@
 
             document.getElementById('infoBatch').textContent = user.batchAssigned || '—';
             document.getElementById('infoSpec').textContent = user.specialization || '—';
+            document.getElementById('infoAcademyName').textContent = user.academyName || '—';
 
             document.getElementById('infoPhone').textContent = user.phone || '—';
             document.getElementById('infoBloodGroup').textContent = user.bloodGroup || '—';
@@ -428,6 +429,83 @@
             document.getElementById('editPhone').value = user.phone || '';
             document.getElementById('editBloodGroup').value = user.bloodGroup || '';
             document.getElementById('editEmergencyContact').value = user.emergencyContact || '';
+
+            loadCoachName(user);
+            if (user.role === 'athlete') loadPerformanceSummary(user);
+        }
+
+        // ─── Sport-specific primary metrics shown on the profile ─────────────────────
+        const PROFILE_METRICS = {
+            cricket: ['Batting Strike Rate', 'Batting Average'],
+            tennis: ['First Serve %', 'Rally Win %'],
+            kabaddi: ['Raid Points', 'Tackle Points'],
+        };
+
+        async function loadPerformanceSummary(user) {
+            const metrics = PROFILE_METRICS[user.sport] || PROFILE_METRICS.cricket;
+            document.getElementById('perfLabel1').textContent = metrics[0];
+            document.getElementById('perfLabel2').textContent = metrics[1];
+
+            const token = getToken();
+
+            // Latest recorded value for each metric (real data only — no fake fallback)
+            for (let i = 0; i < metrics.length; i++) {
+                try {
+                    const res = await fetch(`${API}/performance?athleteId=${user.id}&metric=${encodeURIComponent(metrics[i])}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const data = res.ok ? await res.json() : { records: [] };
+                    const valueEl = document.getElementById(`perfValue${i + 1}`);
+                    const subEl = document.getElementById(`perfSub${i + 1}`);
+                    if (data.records && data.records.length > 0) {
+                        const latest = data.records[data.records.length - 1];
+                        valueEl.textContent = latest.value;
+                        subEl.textContent = 'Latest recorded';
+                    } else {
+                        valueEl.textContent = '—';
+                        subEl.textContent = 'No data yet';
+                    }
+                } catch (err) {
+                    console.error('Error loading performance metric:', err);
+                }
+            }
+
+            // Attendance % and session count this month — from the athlete's own real attendance history
+            try {
+                const now = new Date();
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const res = await fetch(`${API}/attendance/my`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const history = res.ok ? await res.json() : [];
+                const thisMonth = (Array.isArray(history) ? history : []).filter(r => new Date(r.date) >= monthStart);
+                const present = thisMonth.filter(r => r.status === 'present').length;
+                const total = thisMonth.length;
+                document.getElementById('perfAttendance').textContent = total > 0 ? `${Math.round((present / total) * 100)}%` : '—';
+                document.getElementById('perfSessions').textContent = total > 0 ? total : '—';
+            } catch (err) {
+                console.error('Error loading attendance summary:', err);
+            }
+        }
+
+        // ─── Look up the real coach for this athlete's batch ─────────────────────────
+        async function loadCoachName(user) {
+            const coachEl = document.getElementById('infoCoach');
+            if (!coachEl) return;
+            if (!user.batchAssigned) { coachEl.textContent = '—'; return; }
+
+            try {
+                const res = await fetch(`${API}/batches`, {
+                    headers: { Authorization: `Bearer ${getToken()}` }
+                });
+                if (!res.ok) { coachEl.textContent = '—'; return; }
+                const batches = await res.json();
+                const myBatch = batches.find(b => (b.name || '').toLowerCase() === user.batchAssigned.toLowerCase());
+                coachEl.textContent = myBatch?.coachId?.name || 'Not yet assigned';
+            } catch (err) {
+                console.error('Error loading coach:', err);
+                coachEl.textContent = '—';
+            }
         }
 
         function capitalise(str) {

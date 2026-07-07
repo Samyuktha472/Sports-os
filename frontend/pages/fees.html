@@ -102,10 +102,16 @@
             <form id="addFeeForm" class="fee-form" style="display:none;">
                 <div class="fee-form-grid">
                     <div class="form-group">
-                       <div class="form-group">
-                        <label class="filter-label">Athlete Name</label>
-                        <input type="text" id="feeMonthInput" class="form-control" placeholder="e.g. John Doe" required>
+                        <label class="filter-label">BATCH</label>
+                        <select id="feeBatchSelect" class="form-control" required>
+                            <option value="">Select batch</option>
+                        </select>
                     </div>
+                    <div class="form-group">
+                        <label class="filter-label">ATHLETE</label>
+                        <select id="feeAthleteSelect" class="form-control" required disabled>
+                            <option value="">Select batch first</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="filter-label">FEE MONTH</label>
@@ -147,21 +153,9 @@
 
     </div><!-- end .main-content -->
 
-    <script src="../js/sidebar.js?v=4"></script>
+    <script src="../js/sidebar.js?v=3"></script>
     <script src="../js/fees.js"></script>
     <script>
-        (function() {
-            const allowedRoles = ['owner', 'head_coach', 'coach'];
-            const user = JSON.parse(localStorage.getItem('user') || 'null');
-            const role = user?.role;
-            if (!user || !role) {
-                window.location.href = 'login.html';
-                return;
-            }
-            if (!allowedRoles.includes(role)) {
-                window.location.href = role === 'athlete' ? 'performance.html' : 'dashboard.html';
-            }
-        })();
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
                 .then(() => console.log('SW registered'))

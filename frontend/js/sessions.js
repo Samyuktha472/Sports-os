@@ -313,6 +313,14 @@ function getDrillBadgeClass(type) {
 
 // ── Voice Recording ───────────────────────────────────────────────────────────
 function beginRecording() {
+
+    const user = getStoredUser();
+
+if (user?.role !== 'head_coach') {
+    showToast('Only Head Coach can record voice notes.', 'error');
+    return;
+}
+
     const recordBtn = document.getElementById('voiceRecordBtn');
     recordBtn.classList.add('recording');
     recordBtn.textContent = '🔴 Recording... Release to stop';
@@ -323,17 +331,23 @@ function beginRecording() {
         const mediaRecorder = new MediaRecorder(stream);
         ATTACHMENTS.mediaRecorder = mediaRecorder;
 
-        mediaRecorder.addEventListener('dataavailable', event => { ATTACHMENTS.chunks.push(event.data); });
+        mediaRecorder.addEventListener('dataavailable', event => {
+            ATTACHMENTS.chunks.push(event.data);
+        });
+
         mediaRecorder.addEventListener('stop', () => {
             const blob = new Blob(ATTACHMENTS.chunks, { type: 'audio/webm' });
             const reader = new FileReader();
+
             reader.onloadend = () => {
                 ATTACHMENTS.base64Audio = reader.result;
                 const audio = document.getElementById('voiceAudio');
                 audio.src = reader.result;
-                document.getElementById('voicePlaybackText').textContent = `🎤 Voice note recorded — ${ATTACHMENTS.duration}s`;
+                document.getElementById('voicePlaybackText').textContent =
+                    `🎤 Voice note recorded — ${ATTACHMENTS.duration}s`;
                 document.getElementById('voicePlayback').classList.add('show');
             };
+
             reader.readAsDataURL(blob);
             stream.getTracks().forEach(track => track.stop());
         });
@@ -356,6 +370,12 @@ function beginRecording() {
 }
 
 function cancelRecording() {
+    const user = getStoredUser();
+
+if (user?.role !== 'head_coach') {
+    showToast('Only Head Coach can delete voice notes.', 'error');
+    return;
+}
     if (ATTACHMENTS.audioUrl) {
         URL.revokeObjectURL(ATTACHMENTS.audioUrl);
         ATTACHMENTS.audioUrl = null;
@@ -446,7 +466,32 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('sessionAthlete').addEventListener('change', updateRecordingBanner);
 
     const recordBtn = document.getElementById('voiceRecordBtn');
+const deleteBtn = document.getElementById('deleteVoiceBtn');
+const playback = document.getElementById('voicePlayback');
+
+const role = user?.role;
+
+if (role === 'head_coach') {
+
+    recordBtn.style.display = 'inline-flex';
+    deleteBtn.style.display = 'inline-flex';
+    playback.style.display = 'block';
+
     recordBtn.addEventListener('mousedown', beginRecording);
+
+} else if (role === 'coach' || role === 'athlete') {
+
+    recordBtn.style.display = 'none';
+    deleteBtn.style.display = 'none';
+    playback.style.display = 'block';
+
+} else {
+
+    // owner
+    recordBtn.style.display = 'none';
+    deleteBtn.style.display = 'none';
+    playback.style.display = 'none';
+}
 
     document.getElementById('deleteVoiceBtn')?.addEventListener('click', cancelRecording);
     document.getElementById('saveSessionBtn')?.addEventListener('click', saveSession);

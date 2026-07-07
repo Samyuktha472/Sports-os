@@ -274,6 +274,9 @@ exports.updateProfile = async (req, res) => {
 exports.googleCallback = async (req, res) => {
     try {
         const user = req.user;
+        if (!user) {
+            return res.redirect('/login.html?error=no_account');
+        }
         const token = generateToken(user._id);
 
         let sport = user.sport || '';
@@ -289,16 +292,10 @@ exports.googleCallback = async (req, res) => {
             email: user.email,
             role: user.role,
             sport,
+            academyName: user.academyName || '',
         });
 
-        const userAgent = req.headers['user-agent'] || '';
-        const isAndroidAPK = userAgent.includes('wv') || userAgent.includes('SportsOS');
-
-        if (isAndroidAPK) {
-            res.redirect(`sportsos://login?googleAuth=${encodeURIComponent(params.toString())}`);
-        } else {
-            res.redirect(`/login.html?googleAuth=${encodeURIComponent(params.toString())}`);
-        }
+        res.redirect(`/login.html?googleAuth=${encodeURIComponent(params.toString())}`);
     } catch (err) {
         res.redirect('/login.html?error=google_failed');
     }

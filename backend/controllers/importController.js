@@ -2,6 +2,20 @@ const xlsx = require('xlsx');
 const User = require('../models/User');
 const Batch = require('../models/Batch');
 
+const buildImportedUserData = ({ name, email, password, type, batchRaw, phone, dob, reqUser }) => ({
+    name,
+    email,
+    password,
+    role: type,
+    sport: reqUser?.sport || '',
+    academyName: reqUser?.academyName || '',
+    ...(batchRaw && { batchAssigned: batchRaw }),
+    ...(phone && { phone }),
+    ...(dob && { dob }),
+});
+
+exports.buildImportedUserData = buildImportedUserData;
+
 // POST /api/import/bulk
 // Owner only. Accepts base64-encoded xlsx in request body.
 exports.bulkImport = async (req, res) => {
@@ -105,16 +119,16 @@ exports.bulkImport = async (req, res) => {
             // hook hashes it automatically on create() and on .save() when
             // isModified('password') is true. Hashing it here too would
             // double-hash it and break login for imported users.
-            const userData = {
+            const userData = buildImportedUserData({
                 name,
                 email,
                 password,
-                role: type,
-                sport: req.user?.sport || '',
-                ...(batchRaw && { batchAssigned: batchRaw }),
-                ...(phone && { phone }),
-                ...(dob && { dob }),
-            };
+                type,
+                batchRaw,
+                phone,
+                dob,
+                reqUser: req.user,
+            });
 
             // ── Upsert ──
             const existing = await User.findOne({ email });
@@ -124,6 +138,7 @@ exports.bulkImport = async (req, res) => {
                 existing.name = name;
                 existing.role = type;
                 existing.sport = req.user?.sport || existing.sport;
+                existing.academyName = req.user?.academyName || existing.academyName || '';
                 if (phone) existing.phone = phone;
                 if (dob) existing.dob = dob;
                 existing.password = password; // pre('save') hook will hash this

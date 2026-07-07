@@ -12,6 +12,8 @@ function redirectToLogin() {
 const feesState = {
     fees: [],
     athletes: [],
+    batches: [],
+    athleteBatchMap: {},
     selectedMonthKey: null,
     pieMode: 'count',
 };
@@ -86,6 +88,33 @@ function shiftMonthKey(key, delta) {
 }
 
 // ── Data loading ──────────────────────────────────────────────
+function getBatchDisplayName(batch) {
+    if (!batch) return '';
+    return batch.name || batch.batchName || batch.batch?.name || batch.batch?.batchName || '';
+}
+
+function populateAthleteSelectForBatch(batchName) {
+    const select = document.getElementById('feeAthleteSelect');
+    if (!select) return;
+
+    if (!batchName) {
+        select.disabled = true;
+        select.innerHTML = '<option value="">Select batch first</option>';
+        return;
+    }
+
+    const batch = (feesState.batches || []).find(item => getBatchDisplayName(item) === batchName);
+    const athletes = batch?.athletes || [];
+
+    select.disabled = false;
+    select.innerHTML =
+        `<option value="">Select athlete</option>` +
+        athletes.map(athlete => {
+            const athleteName = athlete?.name || athlete?.athleteName || athlete?.fullName || '';
+            return `<option value="${athleteName}">${athleteName}</option>`;
+        }).join('');
+}
+
 async function loadAthletes() {
     const token = getToken();
     const res = await fetch(`${API_BASE_URL}/batches`, {
@@ -94,21 +123,32 @@ async function loadAthletes() {
     const batches = await res.json();
 
     feesState.athletes = [];
-    if (Array.isArray(batches)) {
-        batches.forEach(b => (b.athletes || []).forEach(a => feesState.athletes.push(a)));
+    feesState.batches = Array.isArray(batches) ? batches : [];
+    feesState.athleteBatchMap = {};
+
+    if (Array.isArray(feesState.batches)) {
+        feesState.batches.forEach(batch => {
+            const batchName = getBatchDisplayName(batch) || 'Unassigned';
+            (batch.athletes || []).forEach(athlete => {
+                const athleteName = athlete?.name || athlete?.athleteName || athlete?.fullName || '';
+                if (!athleteName) return;
+
+                feesState.athletes.push(athlete);
+                feesState.athleteBatchMap[athleteName] = batchName;
+            });
+        });
     }
 
-    const select = document.getElementById('feeAthleteSelect');
-    if (!select) return;
-
-    if (feesState.athletes.length === 0) {
-        select.innerHTML = `<option value="">No athletes found</option>`;
-        return;
+    const batchSelect = document.getElementById('feeBatchSelect');
+    if (batchSelect) {
+        batchSelect.innerHTML = '<option value="">Select batch</option>' +
+            feesState.batches.map(batch => {
+                const batchName = getBatchDisplayName(batch) || 'Unassigned';
+                return `<option value="${batchName}">${batchName}</option>`;
+            }).join('');
     }
 
-    select.innerHTML =
-        `<option value="">Select athlete</option>` +
-        feesState.athletes.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+    populateAthleteSelectForBatch('');
 }
 
 async function fetchFees() {
@@ -382,7 +422,29 @@ function renderFees(monthFees) {
         return;
     }
 
-    feeList.innerHTML = monthFees.map(buildFeeRow).join('');
+    const groupedFees = monthFees.reduce((groups, item) => {
+        const batchName = feesState.athleteBatchMap[item.athleteName] || 'Unassigned';
+        if (!groups[batchName]) groups[batchName] = [];
+        groups[batchName].push(item);
+        return groups;
+    }, {});
+
+    const sortedBatchNames = Object.keys(groupedFees).sort((a, b) => {
+        if (a === 'Unassigned') return 1;
+        if (b === 'Unassigned') return -1;
+        return a.localeCompare(b, undefined, { sensitivity: 'base' });
+    });
+
+    feeList.innerHTML = sortedBatchNames.map(batchName => {
+        const items = groupedFees[batchName];
+        return `
+            <div class="fee-batch-group">
+                <div class="fee-batch-header">${batchName} <span class="fee-batch-count">${items.length}</span></div>
+                ${items.map(buildFeeRow).join('')}
+            </div>
+        `;
+    }).join('');
+
     attachRowListeners();
 }
 
@@ -560,6 +622,15 @@ function closeAddFeeForm() {
     const form = document.getElementById('addFeeForm');
     form.style.display = 'none';
     form.reset();
+
+    const batchSelect = document.getElementById('feeBatchSelect');
+    if (batchSelect) batchSelect.value = '';
+
+    const athleteSelect = document.getElementById('feeAthleteSelect');
+    if (athleteSelect) {
+        athleteSelect.disabled = true;
+        athleteSelect.innerHTML = '<option value="">Select batch first</option>';
+    }
 }
 
 function getTodayHeader() {
@@ -583,13 +654,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('cancelAddFeeBtn')?.addEventListener('click', closeAddFeeForm);
     document.getElementById('addFeeForm')?.addEventListener('submit', createFee);
 
-    document.querySelectorAll('.pie-toggle-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            feesState.pieMode = btn.dataset.mode;
-            document.querySelectorAll('.pie-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
-            const monthFees = feesState.fees.filter(f => getFeeMonthKey(f) === feesState.selectedMonthKey);
-            renderPieChart(monthFees);
-        });
+    document.getElementById('feeBatchSelect')?.addEventListener('change', (event) => {
+        populateAthleteSelectForBatch(event.target.value);
     });
 
     await loadAthletes();
