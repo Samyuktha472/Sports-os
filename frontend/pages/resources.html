@@ -48,28 +48,52 @@
                         </div>
 
                         <div>
-                            <button id="addFacilityBtn">
-                                + Add Facility
-                            </button>
+                            <button class="primary-btn" id="addFacilityBtn">
+    + Add Facility
+</button>
                         </div>
 
                     </div>
 
                     <!-- Add Facility Form -->
-                    <div id="facilityForm" style="display:none; margin:15px 0;">
+                <div id="facilityForm" class="resource-form" style="display:none;">
 
-                        <input
-                            type="text"
-                            id="facilityName"
-                            placeholder="Enter Facility Name"
-                            style="padding:8px;width:250px;"
-                        >
+    <input
+        type="text"
+        id="facilityName"
+        placeholder="Facility Name">
 
-                        <button id="saveFacility">
-                            Save
-                        </button>
+    <select id="facilityType">
+        <option value="">Select Facility Type</option>
+        <option>Net</option>
+        <option>Ground</option>
+        <option>Gym</option>
+        <option>Indoor</option>
+    </select>
 
-                    </div>
+    <input
+        type="text"
+        id="facilityLocation"
+        placeholder="Location">
+
+    <div class="form-actions">
+
+        <button id="saveFacility" class="primary-btn">
+            Save
+        </button>
+
+        <button
+            type="button"
+            id="cancelFacility"
+            class="secondary-btn">
+
+            Cancel
+
+        </button>
+
+    </div>
+
+</div>
 
                     <!-- Facility Cards -->
                     <div class="facility-grid" id="facilityGrid"></div>
@@ -77,29 +101,77 @@
                 </section>
 
                 <!-- Equipment -->
-                <section class="equipment-card-section">
+<div class="equipment-card-container">
 
-                    <div class="section-header">
+    <div class="equipment-header">
+        <h2>👜 Equipment Inventory</h2>
 
-                        <div>
-                            <h2>🎒 Equipment Inventory</h2>
-                        </div>
+        <div class="equipment-actions">
+            <button id="addEquipmentBtn" class="btn-primary">
+                + Add Equipment
+            </button>
+            <span>Tap +/- to adjust stock</span>
+        </div>
+    </div>
 
-                        <div class="section-meta">
-                            Tap +/- to adjust stock
-                        </div>
+    <div class="equipment-grid" id="equipmentGrid"></div>
 
-                    </div>
+</div>
+    <!-- Add Equipment Form -->
+  <div id="equipmentForm" class="resource-form" style="display:none;">
 
-                    <div class="equipment-grid" id="equipmentGrid"></div>
+    <input
+        type="text"
+        id="equipmentName"
+        placeholder="Equipment Name">
 
-                </section>
+    <select id="equipmentCategory">
+        <option value="">Category</option>
+        <option>Ball</option>
+        <option>Bat</option>
+        <option>Stumps</option>
+        <option>Cones</option>
+        <option>Machine</option>
+        <option>Other</option>
+    </select>
+
+    <select id="equipmentCondition">
+        <option>Excellent</option>
+        <option>Good</option>
+        <option>Fair</option>
+    </select>
+
+    <input
+        type="number"
+        id="equipmentQty"
+        placeholder="Quantity">
+
+    <div class="form-actions">
+
+        <button id="saveEquipment" class="primary-btn">
+            Save
+        </button>
+
+        <button
+            type="button"
+            id="cancelEquipment"
+            class="secondary-btn">
+
+            Cancel
+
+        </button>
+
+    </div>
+
+</div>
+</section>
 
             </div>
 
         </div>
 
     </div>
+
     <button id="addResourceBtn" class="btn-primary">+ Add Equipment</button>
 
 <div id="resourceForm" style="display:none;" class="resource-modal">
