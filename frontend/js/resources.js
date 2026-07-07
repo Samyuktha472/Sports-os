@@ -310,20 +310,6 @@ function buildEquipmentCard(item) {
             : "in-stock";
 
     return `
-
-        <div class="equipment-card" data-equipment-id="${item._id}">
-            <h3>${item.equipmentName || item.name}</h3>
-<p><strong>Sport:</strong> ${item.sport}</p>
-            <div class="equipment-condition">${item.condition || 'Standard issue'}</div>
-            <div class="equipment-status ${statusClass}">${item.status || 'IN STOCK'}</div>
-            <div>Available: ${item.available ?? item.quantity}</div>
-            <div class="qty-control">
-                <button class="qty-btn decrement" data-id="${item._id}">-</button>
-                <span class="qty-value" id="qty-${item._id}">
-    ${item.available ?? item.quantity ?? 0}
-</span>
-                <button class="qty-btn increment" data-id="${item._id}">+</button>
-
     <div class="equipment-card" data-equipment-id="${item._id}">
 
         <div class="equipment-top">
@@ -343,17 +329,14 @@ function buildEquipmentCard(item) {
 
         </div>
 
-
         <span class="equipment-status ${statusClass}">
             ${item.status}
         </span>
-
 
         <p class="equipment-condition">
             Condition:
             <strong>${item.condition}</strong>
         </p>
-
 
         <div class="qty-control">
 
@@ -363,13 +346,11 @@ function buildEquipmentCard(item) {
                 −
             </button>
 
-
             <span
                 class="qty-value"
                 id="qty-${item._id}">
                 ${item.quantity}
             </span>
-
 
             <button
                 class="qty-btn increment"
@@ -401,12 +382,12 @@ function renderEquipment() {
             const id = button.dataset.id;
             const item = resourcesState.equipment.find(e => e._id === id);
             if (!item) return;
-            item.available = (item.available || 0) + 1;
+           item.quantity = (item.quantity || 0) + 1;
 
-document.getElementById(`qty-${id}`).textContent = item.available;
+document.getElementById(`qty-${id}`).textContent = item.quantity;
 
 await patchResource(id, {
-    available: item.available,
+    quantity: item.quantity,
 });
         });
     });
@@ -421,88 +402,78 @@ await patchResource(id, {
     });
 
 });
-
-<<<<<<< HEAD
-   document.querySelectorAll('.qty-btn.decrement').forEach(button => {
-    button.addEventListener('click', async () => {
+document.querySelectorAll(".qty-btn.decrement").forEach(button => {
+    button.addEventListener("click", async () => {
         const id = button.dataset.id;
         const item = resourcesState.equipment.find(e => e._id === id);
+
         if (!item) return;
 
-       item.available = Math.max(0, (item.available || 0) - 1);
+       item.quantity = Math.max(0, (item.quantity || 0) - 1);
 
-document.getElementById(`qty-${id}`).textContent = item.available;
+document.getElementById(`qty-${id}`).textContent = item.quantity;
 
 await patchResource(id, {
-    available: item.available,
+    quantity: item.quantity
 });
-=======
-    document.querySelectorAll('.qty-btn.decrement').forEach(button => {
-        button.addEventListener('click', async () => {
-            const id = button.dataset.id;
-            const item = resourcesState.equipment.find(e => e._id === id);
-            if (!item) return;
-            item.quantity = Math.max(0, (item.quantity || 0) - 1);
-            document.getElementById(`qty-${id}`).textContent = item.quantity;
-            await patchResource(id, { quantity: item.quantity });
-        console.log("Calling setupSlotForms");
-setupSlotForms();
-        });
->>>>>>> 7f1fabe (Fixed facility and equipment card layouts)
     });
 });
+   
 }
-
 function setupSlotForms() {
-    console.log("setupSlotForms called");
 
-    document.querySelectorAll('.add-slot-btn').forEach(button => {
-        button.addEventListener('click', () => {
+    document.querySelectorAll(".add-slot-btn").forEach(button => {
+        button.addEventListener("click", () => {
+
             const net = button.dataset.net;
-            const form = document.querySelector(`.slot-form[data-net-form="${net}"]`);
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            const form = document.querySelector(
+                `.slot-form[data-net-form="${net}"]`
+            );
+
+            if (!form) return;
+
+            form.style.display =
+                form.style.display === "none" ? "block" : "none";
         });
     });
 
-    document.querySelectorAll('.slot-submit').forEach(button => {
-        button.addEventListener('click', event => {
-            const form = event.target.closest('.slot-form');
+    document.querySelectorAll(".slot-submit").forEach(button => {
+        button.addEventListener("click", event => {
+
+            const form = event.target.closest(".slot-form");
+
             const timeInput = form.querySelector('.slot-input[type="time"]');
             const nameInput = form.querySelector('.slot-input[type="text"]');
-            const select = form.querySelector('.slot-select');
+            const select = form.querySelector(".slot-select");
+
             if (!timeInput.value || !nameInput.value) return;
 
-            const parentCard = form.closest('.facility-card-inner');
-            const row = document.createElement('div');
-            row.className = 'slot-row';
-            row.innerHTML = `
-                <span class="slot-time">${timeInput.value}</span>
-                <span class="slot-name">${nameInput.value}</span>
-                <span class="slot-badge ${select.value.toLowerCase()}">${select.value}</span>`;
-          form.before(row);
+            const parentCard = form.closest(".facility-card-inner");
+            const facilityName = parentCard.querySelector("h3").textContent;
 
-const facilityName = parentCard.querySelector("h3").textContent;
+            const facility = customFacilities.find(
+                f => f.name === facilityName
+            );
 
-const facility = customFacilities.find(f => f.name === facilityName);
+            if (!facility) return;
 
-if (facility) {
-    facility.slots.push({
-        time: timeInput.value,
-        name: nameInput.value,
-        badge: select.value.toLowerCase(),
-        label: select.value
-    });
+            facility.slots.push({
+                time: timeInput.value,
+                name: nameInput.value,
+                badge: select.value.toLowerCase(),
+                label: select.value
+            });
 
-    localStorage.setItem("facilities", JSON.stringify(customFacilities));
-}
+            localStorage.setItem(
+                "facilities",
+                JSON.stringify(customFacilities)
+            );
 
-form.style.display = "none";
-timeInput.value = "";
-nameInput.value = "";
+            renderFacilities();
         });
     });
-}
 
+}
 function setupDeleteButtons() {
 
     document.querySelectorAll(".delete-slot-btn").forEach(button => {
@@ -580,6 +551,7 @@ async function fetchResources() {
         const equipData = await equipRes.json();
         if (!equipRes.ok) throw new Error('Unable to load equipment data');
         resourcesState.equipment = equipData;
+        console.log(resourcesState.equipment);
         renderEquipment();
     } catch (error) {
         console.error('Error loading resources:', error);
