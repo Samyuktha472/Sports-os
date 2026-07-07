@@ -111,107 +111,145 @@ const SPORT_FACILITIES = {
 function renderFacilities() {
 
     const facilities = customFacilities;
-
     const grid = document.getElementById("facilityGrid");
 
     if (!grid) return;
 
     if (facilities.length === 0) {
-
         grid.innerHTML = `
-        <div class="empty-state">
-            No facilities available.
-            Please add a facility.
-        </div>`;
-
+            <div class="empty-state">
+                No facilities available.
+                Please add a facility.
+            </div>`;
         return;
     }
 
     grid.innerHTML = facilities.map(facility => `
 
-        <div class="facility-card-inner">
+        <div class="facility-card">
 
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-    <h3>${facility.name}</h3>
+            <div class="facility-card-inner">
 
-    <button
-    class="delete-facility-btn"
-    data-name="${facility.name}"
-    style="
-        background:none;
-        border:none;
-        font-size:20px;
-        cursor:pointer;
-    ">
-    🗑
-</button>
-</div>
-            ${(facility.slots || []).map((slot, index) => `
-                <div class="slot-row">
-    <span class="slot-time">${slot.time}</span>
-    <span class="slot-name">${slot.name}</span>
-    <span class="slot-badge ${slot.badge}">
-        ${slot.label}
-    </span>
+                <div class="facility-header">
 
-    <button
-    class="delete-slot-btn"
-    data-facility="${facility.name}"
-    data-index="${index}">
-    🗑
-</button>
-</div>
-            `).join("")}
+                    <div class="facility-info">
 
-            <button class="add-slot-btn"
-                data-net="${facility.key}">
-                + Add Slot
-            </button>
+                        <h3>${facility.name}</h3>
 
-            <form class="slot-form"
-                data-net-form="${facility.key}"
-                style="display:none;">
+                        <p class="facility-type">
+                            🏟 ${facility.type || "General"}
+                        </p>
 
-                <div class="slot-form-row">
+                        <p class="facility-location">
+                            📍 ${facility.location || "Not Specified"}
+                        </p>
 
-                    <input
-                        type="time"
-                        class="slot-input"
-                        required>
+                    </div>
 
-                    <input
-                        type="text"
-                        class="slot-input"
-                        placeholder="Name"
-                        required>
 
-                    <select class="slot-select">
-
-                        <option>FREE</option>
-                        <option>MATCH</option>
-                        <option>TRAINING</option>
-
-                    </select>
+                    <button
+                        class="delete-facility-btn"
+                        data-name="${facility.name}">
+                        🗑
+                    </button>
 
                 </div>
 
-                <button
-                    type="button"
-                    class="btn-primary slot-submit">
 
-                    Save Slot
+                <div class="slots-container">
 
+                ${(facility.slots || []).map((slot,index)=>`
+
+                    <div class="slot-row">
+
+                        <span class="slot-time">
+                            ${slot.time}
+                        </span>
+
+                        <span class="slot-name">
+                            ${slot.name}
+                        </span>
+
+                        <span class="slot-badge ${slot.badge}">
+                            ${slot.label}
+                        </span>
+
+
+                        <button
+                            class="delete-slot-btn"
+                            data-facility="${facility.name}"
+                            data-index="${index}">
+                            🗑
+                        </button>
+
+                    </div>
+
+                `).join("")}
+
+                </div>
+
+
+                <button 
+                    class="add-slot-btn"
+                    data-net="${facility.key}">
+                    + Add Slot
                 </button>
 
-            </form>
+
+                <form 
+                    class="slot-form"
+                    data-net-form="${facility.key}"
+                    style="display:none;">
+
+
+                    <div class="slot-form-row">
+
+                        <input
+                            type="time"
+                            class="slot-input"
+                            required>
+
+
+                        <input
+                            type="text"
+                            class="slot-input"
+                            placeholder="Name"
+                            required>
+
+
+                        <select class="slot-select">
+
+                            <option>FREE</option>
+                            <option>MATCH</option>
+                            <option>TRAINING</option>
+
+                        </select>
+
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="btn-primary slot-submit">
+                        Save Slot
+                    </button>
+
+
+                </form>
+
+
+            </div>
 
         </div>
 
+
     `).join("");
 
-  setupSlotForms();
-setupDeleteButtons();
-setupDeleteFacilityButtons();
+
+    setupSlotForms();
+    setupDeleteButtons();
+    setupDeleteFacilityButtons();
 }
 
 const resourcesState = { equipment: [] };
@@ -263,8 +301,16 @@ async function createResource(event) {
 }
 
 function buildEquipmentCard(item) {
-    const statusClass = item.status === 'LOW' ? 'low' : item.status === 'OUT' ? 'out' : 'in-stock';
+
+    const statusClass =
+        item.status === "LOW"
+            ? "low"
+            : item.status === "OUT"
+            ? "out"
+            : "in-stock";
+
     return `
+
         <div class="equipment-card" data-equipment-id="${item._id}">
             <h3>${item.equipmentName || item.name}</h3>
 <p><strong>Sport:</strong> ${item.sport}</p>
@@ -277,17 +323,78 @@ function buildEquipmentCard(item) {
     ${item.available ?? item.quantity ?? 0}
 </span>
                 <button class="qty-btn increment" data-id="${item._id}">+</button>
+
+    <div class="equipment-card" data-equipment-id="${item._id}">
+
+        <div class="equipment-top">
+
+            <div>
+                <h3>🏏 ${item.name}</h3>
+                <p class="equipment-category">
+                    ${item.category || "General Equipment"}
+                </p>
             </div>
-        </div>`;
+
+            <button
+                class="delete-equipment-btn"
+                data-id="${item._id}">
+                🗑
+            </button>
+
+        </div>
+
+
+        <span class="equipment-status ${statusClass}">
+            ${item.status}
+        </span>
+
+
+        <p class="equipment-condition">
+            Condition:
+            <strong>${item.condition}</strong>
+        </p>
+
+
+        <div class="qty-control">
+
+            <button
+                class="qty-btn decrement"
+                data-id="${item._id}">
+                −
+            </button>
+
+
+            <span
+                class="qty-value"
+                id="qty-${item._id}">
+                ${item.quantity}
+            </span>
+
+
+            <button
+                class="qty-btn increment"
+                data-id="${item._id}">
+                +
+            </button>
+
+        </div>
+
+    </div>
+    `;
 }
 
 function renderEquipment() {
     const equipmentGrid = document.getElementById('equipmentGrid');
     if (!resourcesState.equipment.length) {
-        equipmentGrid.innerHTML = '<div class="empty-state">No equipment resources have been added yet.</div>';
+        equipmentGrid.innerHTML = `
+    <p class="empty-message">
+        No equipment resources have been added yet.
+    </p>
+`;
         return;
     }
     equipmentGrid.innerHTML = resourcesState.equipment.map(buildEquipmentCard).join('');
+
 
     document.querySelectorAll('.qty-btn.increment').forEach(button => {
         button.addEventListener('click', async () => {
@@ -303,7 +410,19 @@ await patchResource(id, {
 });
         });
     });
+    document.querySelectorAll(".delete-equipment-btn").forEach(btn => {
 
+    btn.addEventListener("click", () => {
+
+        const id = btn.dataset.id;
+
+        deleteEquipment(id);
+
+    });
+
+});
+
+<<<<<<< HEAD
    document.querySelectorAll('.qty-btn.decrement').forEach(button => {
     button.addEventListener('click', async () => {
         const id = button.dataset.id;
@@ -317,11 +436,26 @@ document.getElementById(`qty-${id}`).textContent = item.available;
 await patchResource(id, {
     available: item.available,
 });
+=======
+    document.querySelectorAll('.qty-btn.decrement').forEach(button => {
+        button.addEventListener('click', async () => {
+            const id = button.dataset.id;
+            const item = resourcesState.equipment.find(e => e._id === id);
+            if (!item) return;
+            item.quantity = Math.max(0, (item.quantity || 0) - 1);
+            document.getElementById(`qty-${id}`).textContent = item.quantity;
+            await patchResource(id, { quantity: item.quantity });
+        console.log("Calling setupSlotForms");
+setupSlotForms();
+        });
+>>>>>>> 7f1fabe (Fixed facility and equipment card layouts)
     });
 });
 }
 
 function setupSlotForms() {
+    console.log("setupSlotForms called");
+
     document.querySelectorAll('.add-slot-btn').forEach(button => {
         button.addEventListener('click', () => {
             const net = button.dataset.net;
@@ -345,7 +479,7 @@ function setupSlotForms() {
                 <span class="slot-time">${timeInput.value}</span>
                 <span class="slot-name">${nameInput.value}</span>
                 <span class="slot-badge ${select.value.toLowerCase()}">${select.value}</span>`;
-           parentCard.insertBefore(row, form);
+          form.before(row);
 
 const facilityName = parentCard.querySelector("h3").textContent;
 
@@ -482,26 +616,101 @@ if (index !== -1) {
 
 function saveFacility() {
 
-    const name = document.getElementById('facilityName').value.trim();
+    const name = document.getElementById("facilityName").value.trim();
+    const type = document.getElementById("facilityType").value;
+    const location = document.getElementById("facilityLocation").value.trim();
 
     if (!name) {
-        alert('Please enter a facility name');
+        alert("Please enter a facility name");
         return;
     }
 
     customFacilities.push({
+
         name,
-        key: name.toLowerCase().replace(/\s+/g, '-'),
+        type,
+        location,
+
+        key: name.toLowerCase().replace(/\s+/g, "-"),
+
         slots: [],
-        options: ['FREE']
+
+        options: ["FREE"]
+
     });
-    localStorage.setItem("facilities", JSON.stringify(customFacilities));
 
-    document.getElementById('facilityName').value = '';
-    document.getElementById('facilityForm').style.display = 'none';
+    // Clear form
+    document.getElementById("facilityName").value = "";
+    document.getElementById("facilityType").value = "";
+    document.getElementById("facilityLocation").value = "";
 
+    // Hide form
+    document.getElementById("facilityForm").style.display = "none";
+
+    // Refresh cards
     renderFacilities();
-    
+
+}
+// New function starts here
+async function saveEquipment() {
+    console.log("saveEquipment called");
+    const token = getToken();
+    if (!token) {
+        redirectToLogin();
+        return;
+    }
+
+    const name = document.getElementById("equipmentName").value.trim();
+    const condition = document.getElementById("equipmentCondition").value;
+    const quantity = Number(document.getElementById("equipmentQty").value);
+    const category = document.getElementById("equipmentCategory").value;
+    let status;
+
+if (quantity === 0) {
+    status = "OUT";
+} else if (quantity <= 10) {
+    status = "LOW";
+} else {
+    status = "IN STOCK";
+}
+    if (!name || quantity < 0) {
+        alert("Please fill all fields.");
+        return;
+    }
+
+    try {
+
+        const response = await fetch(`${API_BASE_URL}/resources`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+           body: JSON.stringify({
+    name,
+    type: "equipment",
+    category,
+    quantity,
+    condition,
+    status
+})
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to save equipment");
+        }
+
+        document.getElementById("equipmentForm").style.display = "none";
+
+        document.getElementById("equipmentName").value = "";
+        document.getElementById("equipmentQty").value = "";
+
+        fetchResources();
+
+    } catch (err) {
+        console.error(err);
+        alert("Unable to save equipment.");
+    }
 }
 
 function getTodayHeader() {
@@ -513,19 +722,93 @@ function getTodayHeader() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+
     const token = getToken();
-    if (!token) { redirectToLogin(); return; }
+    if (!token) {
+        redirectToLogin();
+        return;
+    }
 
     document.getElementById('pageDate').textContent = getTodayHeader();
+
+    // Old Resource Form (keep only if you still use it)
     document.getElementById('addResourceBtn')?.addEventListener('click', openResourceForm);
     document.getElementById('cancelResourceBtn')?.addEventListener('click', closeResourceForm);
     document.getElementById('resourceFormSubmit')?.addEventListener('submit', createResource);
-// Open Add Facility Form
-document.getElementById('addFacilityBtn')?.addEventListener('click', () => {
-    document.getElementById('facilityForm').style.display = 'block';
-});
-document.getElementById('saveFacility')?.addEventListener('click', saveFacility);
+
+    // ---------- Facility ----------
+
+    const facilityForm = document.getElementById("facilityForm");
+
+    document.getElementById("addFacilityBtn")?.addEventListener("click", () => {
+        facilityForm.style.display =
+            facilityForm.style.display === "block" ? "none" : "block";
+    });
+
+    document.getElementById("cancelFacility")?.addEventListener("click", () => {
+        facilityForm.style.display = "none";
+
+        document.getElementById("facilityName").value = "";
+        document.getElementById("facilityType").value = "";
+        document.getElementById("facilityLocation").value = "";
+    });
+
+    document.getElementById("saveFacility")?.addEventListener("click", saveFacility);
+
+    // ---------- Equipment ----------
+
+    const equipmentForm = document.getElementById("equipmentForm");
+
+    document.getElementById("addEquipmentBtn")?.addEventListener("click", () => {
+        equipmentForm.style.display =
+            equipmentForm.style.display === "block" ? "none" : "block";
+    });
+
+    document.getElementById("cancelEquipment")?.addEventListener("click", () => {
+        equipmentForm.style.display = "none";
+
+        document.getElementById("equipmentName").value = "";
+        document.getElementById("equipmentCategory").value = "";
+        document.getElementById("equipmentCondition").value = "Excellent";
+        document.getElementById("equipmentQty").value = "";
+    });
+
+    document.getElementById("saveEquipment")?.addEventListener("click", saveEquipment);
 
     renderFacilities();
     fetchResources();
+
 });
+async function deleteEquipment(id) {
+
+    const token = getToken();
+
+    if (!confirm("Delete this equipment?")) return;
+
+    try {
+
+        const response = await fetch(`${API_BASE_URL}/resources/${id}`, {
+
+            method: "DELETE",
+
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+
+        });
+
+        if (!response.ok) {
+            throw new Error("Delete failed");
+        }
+
+        fetchResources();
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert("Unable to delete equipment.");
+
+    }
+
+}
