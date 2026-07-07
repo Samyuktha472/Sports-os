@@ -180,8 +180,7 @@
     </div>
 
     <script src="../js/sidebar.js?v=4"></script>
-    <script src="../js/notifications.js"></script>
-    <script src="../js/dashboard.js?v=4"></script>
+    <script src="../js/dashboard.js?v=8"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
@@ -189,6 +188,64 @@
                 .catch(err => console.log('SW failed:', err));
         }
     </script>
+    <!-- ── Match creation modal ── -->
+    <div id="matchModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+        <div class="card" style="max-width:420px;width:90%;max-height:90vh;overflow-y:auto;">
+            <div class="card-header">
+                <h3>Create a Match</h3>
+                <button type="button" id="matchModalCloseBtn" class="text-link" style="border:none;background:none;cursor:pointer;font-size:18px;">✕</button>
+            </div>
+            <div class="form-group">
+                <label for="matchOpponent">Opponent</label>
+                <input type="text" id="matchOpponent" class="form-control" placeholder="e.g. Mumbai Colts">
+            </div>
+            <div class="form-group">
+                <label for="matchFormat">Format</label>
+                <input type="text" id="matchFormat" class="form-control" placeholder="e.g. T20 · League">
+            </div>
+            <div class="form-group">
+                <label for="matchSport">Sport</label>
+                <select id="matchSport">
+                    <option value="">Select Sport</option>
+                    <option value="cricket">🏏 Cricket</option>
+                    <option value="tennis">🎾 Tennis</option>
+                    <option value="kabaddi">🤼 Kabaddi</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="matchBatch">Batch</label>
+                <select id="matchBatch">
+                    <option value="">Loading batches...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="matchDate">Date </label>
+                <input type="date" id="matchDate" class="form-control">
+            </div>
+            <div class="form-group">
+    <label for="matchStartTime">Start Time</label>
+    <input type="time" id="matchStartTime" class="form-control" required>
+</div>
+
+<div class="form-group">
+    <label for="matchEndTime">End Time</label>
+    <input type="time" id="matchEndTime" class="form-control" required>
+</div>
+            <div class="form-group">
+                <label for="matchLocation">Location</label>
+                <input type="text" id="matchLocation" class="form-control" placeholder="e.g. Wankhede Practice Ground">
+            </div>
+            <div class="form-group">
+                <label for="matchSquadSize">Squad Size</label>
+                <input type="number" id="matchSquadSize" class="form-control" placeholder="e.g. 14" min="1">
+            </div>
+            <div id="matchModalFeedback" class="card-subtext" style="min-height:20px;"></div>
+            <div class="form-group" style="display:flex;gap:10px;">
+                <button type="button" id="matchCreateBtn" class="btn-primary">Create Match</button>
+                <button type="button" id="matchModalCancelBtn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

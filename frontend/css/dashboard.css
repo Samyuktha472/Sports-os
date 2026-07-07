@@ -446,6 +446,9 @@
     align-items: center;
     justify-content: center;
     z-index: 9998;
+
+    /* Add this */
+    padding: 20px;
 }
 
 .modal-card {
@@ -456,6 +459,10 @@
     padding: 20px 24px;
     box-shadow: var(--shadow-card);
     position: relative;
+
+    /* Add scroll */
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .modal-card h3 {

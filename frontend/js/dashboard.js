@@ -245,15 +245,59 @@ function renderDashboard() {
     const sportIcon = { cricket: '🏏', tennis: '🎾', kabaddi: '🤼' }[sport] || '🏆';
     const token = getToken();
 
-    // Next match card — empty state (no hardcoded data)
+    // Next match card — real data from API, no hardcoded fallback
     const matchTitleEl = document.getElementById('nextMatchTitle');
     const matchTimeEl = document.getElementById('nextMatchTime');
     const matchLocEl = document.getElementById('nextMatchLocation');
     const matchTagsEl = document.getElementById('nextMatchTags');
-    if (matchTitleEl) matchTitleEl.textContent = 'No upcoming match scheduled';
-    if (matchTimeEl) matchTimeEl.textContent = '';
-    if (matchLocEl) matchLocEl.textContent = '';
-    if (matchTagsEl) matchTagsEl.innerHTML = '<span class="pill">Add matches via Timetable</span>';
+    if (matchTitleEl) matchTitleEl.textContent = 'Loading…';
+    fetch(`${API_BASE_URL}/matches/upcoming`, {
+        headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(r => r.ok ? r.json() : null)
+    .then(match => {
+        if (!match) {
+            if (matchTitleEl) matchTitleEl.textContent = 'No upcoming match scheduled';
+            if (matchTimeEl) matchTimeEl.textContent = '';
+            if (matchLocEl) matchLocEl.textContent = '';
+            if (matchTagsEl) matchTagsEl.innerHTML = '';
+            return;
+        }
+        const dateObj = new Date(match.matchDate);
+        const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        const timeStr = dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        const daysOut = Math.max(0, Math.ceil((dateObj - new Date()) / (1000 * 60 * 60 * 24)));
+
+        if (matchTitleEl) {
+    console.log(match);
+
+    const batchName = match.batch?.name || "Selected Batch";
+    matchTitleEl.textContent = `${batchName} vs ${match.opponent}`;
+}
+
+if (matchTimeEl) {
+    matchTimeEl.textContent = `🕐 ${dateStr}, ${timeStr}`;
+}
+
+if (matchLocEl) {
+    matchLocEl.textContent = match.location ? `📍 ${match.location}` : '';
+}
+
+if (matchTagsEl) {
+    matchTagsEl.innerHTML = [
+        match.format ? `<span class="pill">${match.format}</span>` : '',
+        match.squadSize ? `<span class="pill">Squad: ${match.squadSize}</span>` : '',
+        `<span class="pill green-pill">${daysOut} day${daysOut === 1 ? '' : 's'} out</span>`,
+    ].join('');
+}
+
+})   // closes .then(match => {
+
+.catch(() => {
+    if (matchTitleEl) {
+        matchTitleEl.textContent = 'Unable to load match data.';
+    }
+});
 
     // Hide "Manage" link for athletes
     const manageLinkEl = document.querySelector('.practice-net-card .text-link');
@@ -322,14 +366,18 @@ function renderDashboard() {
 
     // Role-based visibility
     if (role === 'athlete') {
-        const matchCard = document.querySelector('.next-match-card');
         const alertsCard = document.querySelector('.workload-card');
         const equipCard = document.querySelector('.equipment-card');
         const attendanceSummaryCard = document.querySelector('.attendance-summary-card');
-        if (matchCard) matchCard.style.display = 'none';
         if (alertsCard) alertsCard.style.display = 'none';
         if (equipCard) equipCard.style.display = 'none';
         if (attendanceSummaryCard) attendanceSummaryCard.style.display = 'none';
+
+        // Athletes can see the upcoming match, but shouldn't create/edit it
+        const enterMatchBtn = document.getElementById('enterMatchModeBtn');
+        const viewSquadBtn = document.getElementById('viewSquadBtn');
+        if (enterMatchBtn) enterMatchBtn.style.display = 'none';
+        if (viewSquadBtn) viewSquadBtn.style.display = 'none';
     }
 
     if (role === 'coach') {
@@ -500,16 +548,68 @@ function renderAthleteProfile(user) {
     }
 }
 
-function renderAthletePerfStats() {
-    const content = getSportContent();
+const DASHBOARD_PROFILE_METRICS = {
+    cricket: ['Batting Strike Rate', 'Batting Average'],
+    tennis: ['First Serve %', 'Rally Win %'],
+    kabaddi: ['Raid Points', 'Tackle Points'],
+};
+
+async function renderAthletePerfStats() {
+    const user = getStoredUser();
     const el = document.getElementById('athletePerfStatsEl');
-    if (!el) return;
-    el.innerHTML = content.athletePerfStats.map(s => `
-        <div class="stat-box">
-            <p class="stat-label">${s.label}</p>
-            <p class="stat-value">${s.value}</p>
-        </div>
-    `).join('');
+    if (!el || !user) return;
+
+    const metrics = DASHBOARD_PROFILE_METRICS[user.sport] || DASHBOARD_PROFILE_METRICS.cricket;
+    const token = getToken();
+
+    // Placeholder while real data loads
+    el.innerHTML = `
+        <div class="stat-box"><p class="stat-label">${metrics[0]}</p><p class="stat-value">—</p></div>
+        <div class="stat-box"><p class="stat-label">${metrics[1]}</p><p class="stat-value">—</p></div>
+        <div class="stat-box"><p class="stat-label">Attendance</p><p class="stat-value">—</p></div>
+        <div class="stat-box"><p class="stat-label">Sessions</p><p class="stat-value">—</p></div>
+    `;
+
+    // Latest real value for each sport-specific metric (no fake fallback)
+    const metricValues = await Promise.all(metrics.map(async (metric) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/performance?athleteId=${user.id}&metric=${encodeURIComponent(metric)}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = res.ok ? await res.json() : { records: [] };
+            if (data.records && data.records.length > 0) {
+                return data.records[data.records.length - 1].value;
+            }
+        } catch (err) {
+            console.error('Error loading performance metric:', err);
+        }
+        return '—';
+    }));
+
+    // Real attendance % and session count this month, from the athlete's own attendance history
+    let attendanceDisplay = '—', sessionsDisplay = '—';
+    try {
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const res = await fetch(`${API_BASE_URL}/attendance/my`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const history = res.ok ? await res.json() : [];
+        const thisMonth = (Array.isArray(history) ? history : []).filter(r => new Date(r.date) >= monthStart);
+        const present = thisMonth.filter(r => r.status === 'present').length;
+        const total = thisMonth.length;
+        attendanceDisplay = total > 0 ? `${Math.round((present / total) * 100)}%` : '—';
+        sessionsDisplay = total > 0 ? total : '—';
+    } catch (err) {
+        console.error('Error loading attendance summary:', err);
+    }
+
+    el.innerHTML = `
+        <div class="stat-box"><p class="stat-label">${metrics[0]}</p><p class="stat-value">${metricValues[0]}</p></div>
+        <div class="stat-box"><p class="stat-label">${metrics[1]}</p><p class="stat-value">${metricValues[1]}</p></div>
+        <div class="stat-box"><p class="stat-label">Attendance</p><p class="stat-value">${attendanceDisplay}</p></div>
+        <div class="stat-box"><p class="stat-label">Sessions</p><p class="stat-value">${sessionsDisplay}</p></div>
+    `;
 }
 
 function renderMotivationQuote() {
@@ -548,7 +648,7 @@ function updateLoginStreak(user) {
     }
 }
 
-function renderAthleteTodos(content) {
+async function renderAthleteTodos(content) {
     const listEl = document.getElementById('athleteTodoList');
     if (!listEl) return;
 
@@ -556,8 +656,25 @@ function renderAthleteTodos(content) {
     let checked;
     try { checked = JSON.parse(localStorage.getItem(key)) || {}; } catch { checked = {}; }
 
+    // Check for a real session today matching this athlete's batch — no fake fallback
+    const user = getStoredUser();
+    let todaySessionTitle = null;
+    try {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const res = await fetch(`${API_BASE_URL}/sessions?date=${todayStr}`, {
+            headers: { Authorization: `Bearer ${getToken()}` }
+        });
+        const sessions = res.ok ? await res.json() : [];
+        const mySession = (Array.isArray(sessions) ? sessions : []).find(
+            s => s.batch?.name && user?.batchAssigned && s.batch.name.toLowerCase() === user.batchAssigned.toLowerCase()
+        );
+        if (mySession) todaySessionTitle = mySession.drillType;
+    } catch (err) {
+        console.error('Error checking today\'s session:', err);
+    }
+
     const todos = [
-        { id: 'session', label: `Attend session: ${content.athleteNextEvent?.title || "Today's training"}` },
+        ...(todaySessionTitle ? [{ id: 'session', label: `Attend session: ${todaySessionTitle}` }] : []),
         { id: 'hydrate', label: 'Stay hydrated through training' },
         { id: 'log_notes', label: 'Check coach notes from last session' },
         { id: 'warmup', label: 'Complete warm-up routine before practice' },
@@ -582,6 +699,171 @@ function renderAthleteTodos(content) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Match Mode — real match creation
+// ─────────────────────────────────────────────────────────────
+function closeMatchModal() {
+    const overlay = document.getElementById('matchModalOverlay');
+    if (overlay) overlay.style.display = 'none';
+    const feedbackEl = document.getElementById('matchModalFeedback');
+    if (feedbackEl) feedbackEl.textContent = '';
+}
+async function loadMatchBatches() {
+    const batchSelect = document.getElementById("matchBatch");
+    const sportSelect = document.getElementById("matchSport");
+
+    if (!batchSelect) return;
+
+    batchSelect.innerHTML = '<option value="">Loading batches...</option>';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/batches`, {
+            headers: {
+                Authorization: `Bearer ${getToken()}`
+            }
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch batches");
+
+        const batches = await res.json();
+
+        const selectedSport = sportSelect ? sportSelect.value : "";
+
+        batchSelect.innerHTML = '<option value="">Select Batch</option>';
+
+        const filteredBatches = selectedSport
+            ? batches.filter(batch =>
+                batch.sport === selectedSport ||
+                batch.sportName === selectedSport ||
+                (batch.sport && batch.sport.name === selectedSport)
+            )
+            : batches;
+
+        if (filteredBatches.length === 0) {
+            batchSelect.innerHTML =
+                '<option value="">No batches available</option>';
+            return;
+        }
+
+        filteredBatches.forEach(batch => {
+            batchSelect.innerHTML += `
+                <option value="${batch._id}">
+                    ${batch.name}
+                </option>
+            `;
+        });
+
+    } catch (err) {
+        console.error("Error loading batches:", err);
+        batchSelect.innerHTML =
+            '<option value="">Unable to load batches</option>';
+    }
+}
+async function handleCreateMatch() {
+    const feedbackEl = document.getElementById("matchModalFeedback");
+
+    const opponent = document.getElementById("matchOpponent").value.trim();
+    const format = document.getElementById("matchFormat").value;
+    const sport = document.getElementById("matchSport").value;
+    const batch = document.getElementById("matchBatch").value;
+    const matchDate = document.getElementById("matchDate").value;
+    const startTime = document.getElementById("matchStartTime").value;
+    const endTime = document.getElementById("matchEndTime").value;
+    const location = document.getElementById("matchLocation").value.trim();
+    const squadSize = document.getElementById("matchSquadSize").value;
+
+    feedbackEl.textContent = "";
+
+    if (!opponent) {
+        feedbackEl.textContent = "Please enter the opponent.";
+        return;
+    }
+
+    if (!sport) {
+        feedbackEl.textContent = "Please select a sport.";
+        return;
+    }
+
+    if (!batch) {
+        feedbackEl.textContent = "Please select a batch.";
+        return;
+    }
+
+    if (!format) {
+        feedbackEl.textContent = "Please select a format.";
+        return;
+    }
+
+    if (!matchDate) {
+        feedbackEl.textContent = "Please select the match date.";
+        return;
+    }
+
+    if (!startTime) {
+        feedbackEl.textContent = "Please select the start time.";
+        return;
+    }
+
+    if (!endTime) {
+        feedbackEl.textContent = "Please select the end time.";
+        return;
+    }
+
+    try {
+
+        console.log("Sending Match Data:", {
+            opponent,
+            format,
+            sport,
+            batch,
+            matchDate,
+            startTime,
+            endTime,
+            location,
+            squadSize
+        });
+
+        const res = await fetch(`${API_BASE_URL}/matches`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({
+                opponent,
+                format,
+                sport,
+                batch,
+                matchDate,
+                startTime,
+                endTime,
+                location,
+                squadSize
+            })
+        });
+
+        const data = await res.json();
+
+        console.log("Response Status:", res.status);
+        console.log("Response Data:", data);
+
+        if (!res.ok) {
+            feedbackEl.textContent =
+                data.message || "Unable to create match.";
+            return;
+        }
+
+        feedbackEl.textContent = "";
+
+        closeMatchModal();
+        renderDashboard();
+
+    } catch (err) {
+        console.error("Error creating match:", err);
+        feedbackEl.textContent =
+            "Unable to create match. Please try again.";
+    }
+}
+// ─────────────────────────────────────────────────────────────
 // Init
 // ─────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -598,11 +880,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('viewSquadBtn')?.addEventListener('click', () => {
         window.location.href = 'batches.html';
     });
-    document.getElementById('enterMatchModeBtn')?.addEventListener('click', () => {
-        alert('Match Mode is coming soon!');
-    });
+   document.getElementById('enterMatchModeBtn')?.addEventListener('click', async () => {
+    const overlay = document.getElementById('matchModalOverlay');
+
+    if (overlay) {
+        overlay.style.display = 'flex';
+    }
+
+    await loadMatchBatches();
+});
+    document.getElementById('matchModalCloseBtn')?.addEventListener('click', closeMatchModal);
+    document.getElementById('matchModalCancelBtn')?.addEventListener('click', closeMatchModal);
+    document.getElementById('matchCreateBtn')?.addEventListener('click', handleCreateMatch);
     document.getElementById('inviteCreateBtn')?.addEventListener('click', handleInviteCreate);
     document.getElementById('copyInviteLinkBtn')?.addEventListener('click', copyInviteLink);
+    document.getElementById("matchSport").addEventListener("change", loadMatchBatches);
 
     // Athlete-only extras
     if (user.role === 'athlete') {
