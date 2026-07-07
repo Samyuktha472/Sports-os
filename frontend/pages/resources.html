@@ -51,6 +51,40 @@
             </div>
         </div>
     </div>
+    <button id="addResourceBtn" class="btn-primary">+ Add Equipment</button>
+
+<div id="resourceForm" style="display:none;" class="resource-modal">
+    <form id="resourceFormSubmit" class="resource-form">
+
+        <label>Equipment Name</label>
+        <input type="text" id="resourceName" required>
+
+        <label>Category</label>
+        <select id="resourceType">
+            <option value="Bat">Bat</option>
+            <option value="Ball">Ball</option>
+            <option value="Cone">Cone</option>
+            <option value="Jersey">Jersey</option>
+            <option value="Racket">Racket</option>
+            <option value="Mat">Mat</option>
+        </select>
+
+        <label>Description</label>
+        <textarea id="resourceDescription"></textarea>
+
+        <label>Image URL</label>
+        <input type="text" id="resourceURL">
+
+        <label>Quantity</label>
+        <input type="number" id="resourceQuantity" value="1" min="0">
+
+        <div style="margin-top:15px;">
+            <button type="submit" class="btn-primary">Save</button>
+            <button type="button" id="cancelResourceBtn">Cancel</button>
+        </div>
+
+    </form>
+</div>
 
     <script src="../js/sidebar.js?v=4"></script>
     <script src="../js/resources.js"></script>

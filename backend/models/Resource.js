@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 const resourceSchema = new mongoose.Schema(
     {
         type: {
-            type: String,
-            required: true,
-            enum: ['facility', 'equipment', 'fee'],
-        },
+    type: String,
+    required: true,
+    enum: ['facility', 'equipment', 'fee'],
+},
         sport: {
             type: String,
             enum: ['cricket', 'tennis', 'kabaddi'],
@@ -32,6 +32,36 @@ const resourceSchema = new mongoose.Schema(
         condition: {
             type: String,
         },
+        resourceType: {
+             type: String,
+             enum: ['Equipment', 'Ground', 'Room', 'Other'],
+             default: 'Equipment',
+        },
+
+         equipmentName: {
+            type: String,
+  trim: true,
+},
+
+
+
+category: {
+  type: String,
+},
+
+available: {
+  type: Number,
+  default: 0,
+},
+
+inUse: {
+  type: Number,
+  default: 0,
+},
+
+location: {
+  type: String,
+},
         allocations: [
             {
                 time: String,
