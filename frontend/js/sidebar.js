@@ -139,6 +139,28 @@ function renderSidebar() {
                     <div class="logo-subtitle">${sportLabel}</div>
                 </div>
             </div>
+            <div style="position:relative;">
+                <button id="notificationBellBtn" aria-label="Notifications"
+                    style="position:relative;background:none;border:none;cursor:pointer;font-size:20px;padding:6px;color:#fff;">
+                    🔔
+                    <span id="notificationBadge"
+                        style="display:none;position:absolute;top:2px;right:2px;background:#DC2626;color:#fff;
+                        font-size:10px;font-weight:700;border-radius:999px;min-width:16px;height:16px;
+                        line-height:16px;text-align:center;padding:0 3px;"></span>
+                </button>
+                <div id="notificationDropdown"
+    style="display:none;position:fixed;width:300px;max-height:360px;
+                    overflow-y:auto;background:#fff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.18);
+                    z-index:9999;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;
+                        padding:10px 12px;border-bottom:1px solid #F0F0F0;">
+                        <span style="font-size:13px;font-weight:700;color:#111827;">Notifications</span>
+                        <button id="markAllReadBtn"
+                            style="background:none;border:none;color:#2563EB;font-size:12px;cursor:pointer;">Mark all read</button>
+                    </div>
+                    <div id="notificationList"></div>
+                </div>
+            </div>
         </div>
         <nav class="sidebar-nav">
             <ul>${navMarkup}</ul>

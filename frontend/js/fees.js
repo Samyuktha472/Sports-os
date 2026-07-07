@@ -657,7 +657,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('feeBatchSelect')?.addEventListener('change', (event) => {
         populateAthleteSelectForBatch(event.target.value);
     });
-
+    document.querySelectorAll('.pie-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            feesState.pieMode = btn.dataset.mode;
+            document.querySelectorAll('.pie-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+            renderMonthView();
+        });
+    });
     await loadAthletes();
     await fetchFees();
 });

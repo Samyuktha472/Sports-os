@@ -99,6 +99,11 @@ exports.getCoaches = async (req, res) => {
 
 exports.createCoach = async (req, res) => {
     try {
+        // Only owner and head_coach can add coaches
+        if (req.user.role === 'coach') {
+            return res.status(403).json({ message: 'You are not authorized to add coaches' });
+        }
+
         const { name, email, password, role, specialization, phone } = req.body;
         if (!name || !email || !password) {
             return res.status(400).json({ message: 'name, email and password are required' });
@@ -132,6 +137,11 @@ exports.createCoach = async (req, res) => {
 
 exports.updateCoach = async (req, res) => {
     try {
+        // Only owner and head_coach can edit coaches
+        if (req.user.role === 'coach') {
+            return res.status(403).json({ message: 'You are not authorized to edit coaches' });
+        }
+
         const filter = { _id: req.params.id, role: { $in: ['coach', 'head_coach'] } };
         if (req.user?.sport) filter.sport = req.user.sport;
         if (req.user?.academyName) filter.academyName = req.user.academyName;
@@ -155,6 +165,11 @@ exports.updateCoach = async (req, res) => {
 
 exports.deleteCoach = async (req, res) => {
     try {
+        // Only owner and head_coach can delete coaches
+        if (req.user.role === 'coach') {
+            return res.status(403).json({ message: 'You are not authorized to delete coaches' });
+        }
+
         const filter = { _id: req.params.id, role: { $in: ['coach', 'head_coach'] } };
         if (req.user?.sport) filter.sport = req.user.sport;
         const user = await User.findOneAndDelete(filter);

@@ -25,13 +25,13 @@ const userSchema = new mongoose.Schema(
             required: true,
         },
         sport: {
-    type: String
-},
+            type: String
+        },
 
-sports: {
-    type: [String],
-    default: []
-},
+        sports: {
+            type: [String],
+            default: []
+        },
         academyName: {
             type: String,
         },

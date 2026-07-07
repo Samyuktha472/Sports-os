@@ -123,13 +123,33 @@
             </div>
         </section>
 
-        
+        <section class="card athlete-list-card">
+            <div class="athlete-header">
+                <div class="athlete-title">
+                    <span class="athlete-icon">🏏</span>
+                    <span id="selectedBatchLabel">Select a batch</span>
+                </div>
+            </div>
+
+            <div id="athleteList" class="athlete-list"></div>
+
+            <button id="saveAttendanceBtn" class="btn-save">💾 Save Attendance</button>
+
+            <div class="attendance-history">
+                <p class="history-label">Last 7 Days</p>
+                <div id="attendanceHistoryList" class="history-list">
+                    <p style="color:#6B7280;">Loading history...</p>
+                </div>
+            </div>
+        </section>
+
     </div>
 
     <script src="../js/sidebar.js?v=4"></script>
+    <script src="../js/notifications.js"></script>
     <script src="../js/batches.js"></script>
     <script>
-        (function() {
+        (function () {
             const allowedRoles = ['owner', 'head_coach', 'coach'];
             const user = JSON.parse(localStorage.getItem('user') || 'null');
             const role = user?.role;

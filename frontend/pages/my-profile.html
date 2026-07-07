@@ -183,6 +183,190 @@
         #toast.error {
             background: #DC2626;
         }
+
+        /* ── Batch change: status row + modals ── */
+        #batchChangeStatusRow {
+            margin-top: 10px;
+        }
+
+        .bc-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .bc-badge.pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .bc-badge.approved {
+            background: #DCFCE7;
+            color: #16A34A;
+        }
+
+        .bc-badge.rejected {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #fff;
+            border-radius: 12px;
+            width: 420px;
+            max-width: 92vw;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #F0F0F0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #6B7280;
+        }
+
+        .modal-body {
+            padding: 18px 20px;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 14px 20px;
+            border-top: 1px solid #F0F0F0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .field-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #6B7280;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .field-select,
+        .field-textarea {
+            width: 100%;
+            padding: 9px 10px;
+            border: 1.5px solid #D1D5DB;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+            margin-bottom: 14px;
+        }
+
+        .field-select:focus,
+        .field-textarea:focus {
+            border-color: #F5C518;
+        }
+
+        .field-textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        /* Chat thread */
+        #chatMessages {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 320px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .chat-bubble .chat-meta {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+            opacity: 0.7;
+        }
+
+        .chat-bubble.mine {
+            align-self: flex-end;
+            background: #F5C518;
+            color: #111827;
+        }
+
+        .chat-bubble.theirs {
+            align-self: flex-start;
+            background: #F3F4F6;
+            color: #111827;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-row input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1.5px solid #D1D5DB;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .chat-input-row input:focus {
+            border-color: #F5C518;
+        }
+
+        .bc-resolved-note {
+            font-size: 12px;
+            color: #6B7280;
+            text-align: center;
+            padding: 8px 0;
+        }
     </style>
 </head>
 
@@ -312,9 +496,15 @@
                         <div style="font-weight:600" id="infoAcademyName">Sports OS Academy</div>
                     </div>
                     <div>
-                        <div style="font-size:11px;font-weight:600;color:#6B7280;
-                        text-transform:uppercase;margin-bottom:4px">Batch</div>
-                        <div id="infoBatch" style="font-weight:600"></div>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+                            <div>
+                                <div style="font-size:11px;font-weight:600;color:#6B7280;
+                                text-transform:uppercase;margin-bottom:4px">Batch</div>
+                                <div id="infoBatch" style="font-weight:600"></div>
+                            </div>
+                            <div id="batchChangeActionWrap"></div>
+                        </div>
+                        <div id="batchChangeStatusRow"></div>
                     </div>
                     <div>
                         <div style="font-size:11px;font-weight:600;color:#6B7280;
@@ -365,7 +555,50 @@
 
     <div id="toast"></div>
 
+    <!-- ── Batch Change Request modal ── -->
+    <div class="modal-overlay" id="batchChangeModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Request Batch Change</h3>
+                <button class="modal-close-btn" id="bcModalCloseBtn">✕</button>
+            </div>
+            <div class="modal-body">
+                <label class="field-label" for="bcTargetBatch">Move to batch</label>
+                <select class="field-select" id="bcTargetBatch">
+                    <option value="">Select a batch…</option>
+                </select>
+
+                <label class="field-label" for="bcReason">Reason for change</label>
+                <textarea class="field-textarea" id="bcReason"
+                    placeholder="Tell your coach why you'd like to switch batches…"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-icon" id="bcCancelBtn">Cancel</button>
+                <button class="btn-icon primary" id="bcSubmitBtn">Send Request</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Chat thread modal ── -->
+    <div class="modal-overlay" id="chatModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="chatModalTitle">Batch Change Request</h3>
+                <button class="modal-close-btn" id="chatModalCloseBtn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="chatMessages"></div>
+                <div id="chatInputWrap" class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="Type a message…">
+                    <button class="btn-icon primary" id="chatSendBtn">Send</button>
+                </div>
+                <div id="chatResolvedNote" class="bc-resolved-note" style="display:none"></div>
+            </div>
+        </div>
+    </div>
+
     <script src="../js/sidebar.js?v=4"></script>
+    <script src="../js/notifications.js"></script>
     <script>
         const API = `${window.location.origin}/api`;
 
@@ -382,6 +615,9 @@
             // Merge updated fields into the stored object (preserve token etc.)
             const current = getUser() || {};
             localStorage.setItem('user', JSON.stringify({ ...current, ...updated }));
+        }
+        function authHeaders() {
+            return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
         }
 
         let toastTimer;
@@ -431,7 +667,10 @@
             document.getElementById('editEmergencyContact').value = user.emergencyContact || '';
 
             loadCoachName(user);
-            if (user.role === 'athlete') loadPerformanceSummary(user);
+            if (user.role === 'athlete') {
+                loadPerformanceSummary(user);
+                setupBatchChangeUI(user);
+            }
         }
 
         // ─── Sport-specific primary metrics shown on the profile ─────────────────────
@@ -515,6 +754,213 @@
             if (!iso) return 'N/A';
             return new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // Batch Change Request — button, modal, and chat thread
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        let bcCurrentRequest = null;   // the athlete's own latest/pending request, if any
+        let bcAllBatches = [];         // cached batch list for the target dropdown
+        let chatPollTimer = null;
+
+        async function setupBatchChangeUI(user) {
+            await refreshBatchChangeStatus(user);
+        }
+
+        async function refreshBatchChangeStatus(user) {
+            const actionWrap = document.getElementById('batchChangeActionWrap');
+            const statusRow = document.getElementById('batchChangeStatusRow');
+            if (!actionWrap || !statusRow) return;
+
+            try {
+                const res = await fetch(`${API}/batch-change-requests/my`, { headers: authHeaders() });
+                const requests = res.ok ? await res.json() : [];
+                const pending = (Array.isArray(requests) ? requests : []).find(r => r.status === 'pending');
+                bcCurrentRequest = pending || (requests[0] || null);
+
+                if (pending) {
+                    actionWrap.innerHTML = `<button class="btn-icon" id="bcViewBtn">💬 View Request</button>`;
+                    statusRow.innerHTML = `<span class="bc-badge pending">Pending — awaiting coach response</span>`;
+                    document.getElementById('bcViewBtn').addEventListener('click', () => openChatModal(pending._id));
+                } else {
+                    actionWrap.innerHTML = `<button class="btn-icon" id="bcOpenBtn">🔁 Request Batch Change</button>`;
+                    statusRow.innerHTML = '';
+                    document.getElementById('bcOpenBtn').addEventListener('click', openBatchChangeModal);
+                }
+            } catch (err) {
+                console.error('Error checking batch change status:', err);
+                actionWrap.innerHTML = `<button class="btn-icon" id="bcOpenBtn">🔁 Request Batch Change</button>`;
+                document.getElementById('bcOpenBtn').addEventListener('click', openBatchChangeModal);
+            }
+        }
+
+        async function openBatchChangeModal() {
+            const modal = document.getElementById('batchChangeModal');
+            const select = document.getElementById('bcTargetBatch');
+            const reasonBox = document.getElementById('bcReason');
+            const user = getUser();
+
+            select.innerHTML = `<option value="">Loading batches…</option>`;
+            reasonBox.value = '';
+            modal.classList.add('open');
+
+            try {
+                const res = await fetch(`${API}/batches`, { headers: authHeaders() });
+                bcAllBatches = res.ok ? await res.json() : [];
+                const others = bcAllBatches.filter(
+                    b => (b.name || '').toLowerCase() !== (user.batchAssigned || '').toLowerCase()
+                );
+                select.innerHTML = others.length
+                    ? `<option value="">Select a batch…</option>` +
+                    others.map(b => `<option value="${b._id}">${b.name}${b.coachId?.name ? ` · Coach ${b.coachId.name}` : ''}</option>`).join('')
+                    : `<option value="">No other batches available</option>`;
+            } catch (err) {
+                console.error('Error loading batches for change request:', err);
+                select.innerHTML = `<option value="">Failed to load batches</option>`;
+            }
+        }
+
+        function closeBatchChangeModal() {
+            document.getElementById('batchChangeModal').classList.remove('open');
+        }
+
+        async function submitBatchChangeRequest() {
+            const targetBatchId = document.getElementById('bcTargetBatch').value;
+            const message = document.getElementById('bcReason').value.trim();
+            const submitBtn = document.getElementById('bcSubmitBtn');
+
+            if (!targetBatchId) { showToast('Please select a target batch', 'error'); return; }
+            if (!message) { showToast('Please add a short reason', 'error'); return; }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending…';
+            try {
+                const res = await fetch(`${API}/batch-change-requests`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ targetBatchId, message }),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showToast(data.message || 'Failed to send request', 'error');
+                    return;
+                }
+                showToast('Request sent to your coaches');
+                closeBatchChangeModal();
+                await refreshBatchChangeStatus(getUser());
+            } catch (err) {
+                console.error('Error submitting batch change request:', err);
+                showToast('Network error', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Request';
+            }
+        }
+
+        // ── Chat thread ──────────────────────────────────────────────────────────
+
+        async function openChatModal(requestId) {
+            const modal = document.getElementById('chatModal');
+            modal.dataset.requestId = requestId;
+            modal.classList.add('open');
+            await loadChatThread(requestId);
+
+            clearInterval(chatPollTimer);
+            chatPollTimer = setInterval(() => loadChatThread(requestId), 8000);
+        }
+
+        function closeChatModal() {
+            document.getElementById('chatModal').classList.remove('open');
+            clearInterval(chatPollTimer);
+        }
+
+        async function loadChatThread(requestId) {
+            const user = getUser();
+            const titleEl = document.getElementById('chatModalTitle');
+            const messagesEl = document.getElementById('chatMessages');
+            const inputWrap = document.getElementById('chatInputWrap');
+            const resolvedNote = document.getElementById('chatResolvedNote');
+
+            try {
+                const res = await fetch(`${API}/batch-change-requests/${requestId}`, { headers: authHeaders() });
+                if (!res.ok) return;
+                const request = await res.json();
+
+                titleEl.textContent = `${request.currentBatchId?.name || '—'} → ${request.targetBatchId?.name || '—'}`;
+
+                messagesEl.innerHTML = (request.messages || []).map(m => {
+                    const mine = String(m.senderId?._id || m.senderId) === String(user.id || user._id);
+                    const senderLabel = mine ? 'You' : (m.senderId?.name || capitalise(m.senderRole || ''));
+                    return `
+                        <div class="chat-bubble ${mine ? 'mine' : 'theirs'}">
+                            <div class="chat-meta">${senderLabel}</div>
+                            <div>${m.text}</div>
+                        </div>`;
+                }).join('');
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+
+                if (request.status !== 'pending') {
+                    inputWrap.style.display = 'none';
+                    resolvedNote.style.display = 'block';
+                    resolvedNote.textContent = request.status === 'approved'
+                        ? '✅ This request was approved — you have been moved to the new batch.'
+                        : '❌ This request was rejected.';
+                    clearInterval(chatPollTimer);
+                    await refreshBatchChangeStatus(user);
+                } else {
+                    inputWrap.style.display = 'flex';
+                    resolvedNote.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Error loading chat thread:', err);
+            }
+        }
+
+        async function sendChatMessage() {
+            const modal = document.getElementById('chatModal');
+            const requestId = modal.dataset.requestId;
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.disabled = true;
+            try {
+                const res = await fetch(`${API}/batch-change-requests/${requestId}/messages`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ text }),
+                });
+                if (res.ok) {
+                    input.value = '';
+                    await loadChatThread(requestId);
+                } else {
+                    const data = await res.json();
+                    showToast(data.message || 'Failed to send message', 'error');
+                }
+            } catch (err) {
+                console.error('Error sending chat message:', err);
+            } finally {
+                input.disabled = false;
+                input.focus();
+            }
+        }
+
+        // Modal wiring (safe even before the athlete-only elements exist)
+        document.getElementById('bcModalCloseBtn')?.addEventListener('click', closeBatchChangeModal);
+        document.getElementById('bcCancelBtn')?.addEventListener('click', closeBatchChangeModal);
+        document.getElementById('bcSubmitBtn')?.addEventListener('click', submitBatchChangeRequest);
+        document.getElementById('batchChangeModal')?.addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeBatchChangeModal();
+        });
+
+        document.getElementById('chatModalCloseBtn')?.addEventListener('click', closeChatModal);
+        document.getElementById('chatModal')?.addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeChatModal();
+        });
+        document.getElementById('chatSendBtn')?.addEventListener('click', sendChatMessage);
+        document.getElementById('chatInput')?.addEventListener('keydown', e => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
 
         // ─── Edit mode ────────────────────────────────────────────────────────────────
         const personalCard = document.getElementById('personalCard');

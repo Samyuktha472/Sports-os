@@ -1,0 +1,215 @@
+// ── Batches ───────────────────────────────────────────────────────────────────
+let allCoachesForBatch = [];
+let allAthletesForBatch = [];
+let existingBatches = [];
+let editBatchId = null;
+
+async function loadBatchFormData() {
+    try {
+        const [coachRes, athleteRes, batchRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/roster/coaches`, { headers: authHeaders() }),
+            fetch(`${API_BASE_URL}/roster/athletes`, { headers: authHeaders() }),
+            fetch(`${API_BASE_URL}/batches`, { headers: authHeaders() }),
+        ]);
+        allCoachesForBatch = await coachRes.json();
+        allAthletesForBatch = await athleteRes.json();
+        existingBatches = await batchRes.json();
+    } catch (err) {
+        console.error('Error loading batch form data:', err);
+        allCoachesForBatch = [];
+        allAthletesForBatch = [];
+        existingBatches = [];
+    }
+    renderBatchForm();
+    renderExistingBatches();
+}
+
+function renderBatchForm() {
+    const role = getStoredUser()?.role;
+
+    const headCoachWrap = document.getElementById('headCoachFieldWrap');
+    if (headCoachWrap) {
+        headCoachWrap.style.display = role === 'owner' ? 'block' : 'none';
+        if (role === 'owner') {
+            const headCoaches = allCoachesForBatch.filter(c => c.role === 'head_coach');
+            document.getElementById('b_headCoach').innerHTML =
+                '<option value="">Select head coach</option>' +
+                headCoaches.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
+        }
+    }
+
+    const coachesWrap = document.getElementById('coachesFieldWrap');
+    if (coachesWrap) {
+        const canPickCoaches = role === 'owner' || role === 'head_coach';
+        coachesWrap.style.display = canPickCoaches ? 'block' : 'none';
+        if (canPickCoaches) {
+            const coachOnly = allCoachesForBatch.filter(c => c.role === 'coach');
+            document.getElementById('b_coachesList').innerHTML = coachOnly.length
+                ? coachOnly.map(c => `
+                    <label class="checkbox-row">
+                        <input type="checkbox" value="${c._id}" class="b-coach-checkbox">
+                        <span>${c.name}</span>
+                    </label>`).join('')
+                : '<p class="empty-hint">No coaches available yet.</p>';
+        }
+    }
+
+    document.getElementById('b_athletesList').innerHTML = allAthletesForBatch.length
+        ? allAthletesForBatch.map(a => `
+            <label class="checkbox-row">
+                <input type="checkbox" value="${a._id}" class="b-athlete-checkbox">
+                <span>${a.name}</span>
+            </label>`).join('')
+        : '<p class="empty-hint">No athletes available yet.</p>';
+}
+
+// Returns a small HTML snippet for the "Request to join as Coach" action,
+// or an empty string if this batch/user doesn't qualify for it.
+function getCoachJoinRequestHtml(b) {
+    const user = getStoredUser();
+    if (!user || user.role !== 'coach') return '';
+
+    const headCoachId = b.coachId?._id || b.coachId;
+    if (String(headCoachId) !== String(user.id || user._id)) return ''; // only the batch creator sees this
+
+    const alreadyCoach = (b.coaches || []).some(c => String(c._id || c) === String(user.id || user._id));
+    if (alreadyCoach) return '';
+
+    const pending = (b.pendingCoachRequests || []).some(
+        r => String(r.coachId?._id || r.coachId) === String(user.id || user._id) && r.status === 'pending'
+    );
+    if (pending) {
+        return '<span class="badge" style="background:#FEF3C7;color:#92400E;">Request pending</span>';
+    }
+
+    return `<button class="btn-icon" onclick="requestCoachJoin('${b._id}')">🙋 Request to join as Coach</button>`;
+}
+
+function renderExistingBatches() {
+    const tbody = document.getElementById('batchTableBody');
+    if (!tbody) return;
+    if (!existingBatches.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No batches created yet.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = existingBatches.map(b => `
+        <tr>
+            <td>${b.name}</td>
+            <td>${b.coachId?.name || '—'}</td>
+            <td>${(b.coaches || []).length}</td>
+            <td>${(b.athletes || []).length}</td>
+            <td>
+                <div class="action-btns">
+                    <button class="btn-icon" onclick="openEditBatch('${b._id}')">✏️ Edit</button>
+                    ${getCoachJoinRequestHtml(b)}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+async function requestCoachJoin(batchId) {
+    try {
+        const res = await fetch(`${API_BASE_URL}/batches/${batchId}/request-coach`, {
+            method: 'POST',
+            headers: authHeaders(),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.message || 'Failed to send request', 'error');
+            return;
+        }
+        showToast('Request sent to owner/head coach');
+        loadBatchFormData();
+    } catch (err) {
+        console.error('Error requesting coach join:', err);
+        showToast('Network error', 'error');
+    }
+}
+
+function openEditBatch(id) {
+    const b = existingBatches.find(x => x._id === id);
+    if (!b) return;
+    editBatchId = id;
+
+    document.getElementById('batchFormTitle').textContent = `Edit Batch: ${b.name}`;
+    document.getElementById('b_name').value = b.name || '';
+
+    const role = getStoredUser()?.role;
+
+    if (role === 'owner') {
+        document.getElementById('b_headCoach').value = b.coachId?._id || b.coachId || '';
+    }
+
+    // Check the coaches that are already in this batch
+    document.querySelectorAll('.b-coach-checkbox').forEach(cb => {
+        const batchCoachIds = (b.coaches || []).map(c => c._id || c);
+        cb.checked = batchCoachIds.includes(cb.value);
+    });
+
+    // Check the athletes that are already in this batch
+    document.querySelectorAll('.b-athlete-checkbox').forEach(cb => {
+        const batchAthleteIds = (b.athletes || []).map(a => a._id || a);
+        cb.checked = batchAthleteIds.includes(cb.value);
+    });
+
+    document.getElementById('batchSaveBtn').textContent = 'Update Batch';
+    document.getElementById('batchCancelEditBtn').style.display = 'inline-block';
+
+    // Scroll up to the form so the user sees it
+    document.querySelector('.batch-form-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEditBatch() {
+    editBatchId = null;
+    document.getElementById('batchFormTitle').textContent = 'Create New Batch';
+    document.getElementById('b_name').value = '';
+    if (document.getElementById('b_headCoach')) document.getElementById('b_headCoach').value = '';
+    document.querySelectorAll('.b-coach-checkbox, .b-athlete-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('batchSaveBtn').textContent = 'Create Batch';
+    document.getElementById('batchCancelEditBtn').style.display = 'none';
+}
+
+async function saveBatch() {
+    const role = getStoredUser()?.role;
+    const btn = document.getElementById('batchSaveBtn');
+    const name = document.getElementById('b_name').value.trim();
+
+    if (!name) { showToast('Batch name is required', 'error'); return; }
+
+    const athleteIds = Array.from(document.querySelectorAll('.b-athlete-checkbox:checked')).map(cb => cb.value);
+    const body = { name, athletes: athleteIds };
+
+    if (role === 'owner') {
+        const headCoachId = document.getElementById('b_headCoach').value;
+        if (!headCoachId) { showToast('Please select a head coach', 'error'); return; }
+        body.coachId = headCoachId;
+        body.coaches = Array.from(document.querySelectorAll('.b-coach-checkbox:checked')).map(cb => cb.value);
+    } else if (role === 'head_coach') {
+        body.coaches = Array.from(document.querySelectorAll('.b-coach-checkbox:checked')).map(cb => cb.value);
+    }
+
+    btn.disabled = true;
+    try {
+        const url = editBatchId ? `${API_BASE_URL}/batches/${editBatchId}` : `${API_BASE_URL}/batches`;
+        const method = editBatchId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+            method,
+            headers: authHeaders(),
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) { showToast(data.message || 'Failed to save batch', 'error'); return; }
+
+        showToast(editBatchId ? 'Batch updated successfully' : 'Batch created successfully');
+        cancelEditBatch();
+        loadBatchFormData();
+    } catch {
+        showToast('Network error', 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+document.getElementById('batchSaveBtn')?.addEventListener('click', saveBatch);
+document.getElementById('batchCancelEditBtn')?.addEventListener('click', cancelEditBatch);
