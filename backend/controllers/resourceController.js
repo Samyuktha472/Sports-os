@@ -2,55 +2,86 @@ const Resource = require('../models/Resource');
 
 exports.addResource = async (req, res) => {
     try {
-        const {
-            name,
-            type,
-            description,
-            url,
-            batch,
-            coach,
-            quantity,
-            status,
-            condition,
-            athleteName,
-            feeMonth,
-            feePaid,
-            amount,
-            dueDate,
-        } = req.body;
+       const {
+    name,
+    type,
+    description,
+    url,
+    batch,
+    coach,
+    quantity,
+    status,
+    condition,
+    athleteName,
+    feeMonth,
+    feePaid,
+    amount,
+    dueDate,
+
+    // Equipment fields
+    equipmentName,
+    resourceType,
+    category,
+    available,
+    inUse,
+    location,
+    sport,
+} = req.body;
 
         const resource = new Resource({
-            name,
-            type,
-            sport: req.user?.sport || 'cricket',
-            academyName: req.user?.academyName || '',
-            description,
-            url,
-            batch,
-            coach: coach || req.user?.id,
-            quantity,
-            status,
-            condition,
-            athleteName,
-            feeMonth,
-            feePaid,
-            amount,
-            dueDate,
-        });
+   name: name || equipmentName,
+    type,
+    description,
+    url,
+    batch,
+    coach: coach || req.user?.id,
+
+    quantity,
+    status,
+    condition,
+
+    // Equipment fields
+    equipmentName,
+    resourceType,
+    category,
+    available,
+    inUse,
+    location,
+
+    sport: sport || req.user?.sport || 'cricket',
+    academyName: req.user?.academyName || '',
+
+    athleteName,
+    feeMonth,
+    feePaid,
+    amount,
+    dueDate,
+});
 
         await resource.save();
         res.status(201).json(resource);
     } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    console.error("Add Resource Error:", error);
+    res.status(500).json({ message: error.message });
+}
 };
 
 exports.getAllResources = async (req, res) => {
     try {
-        const { type } = req.query;
-        const filter = { sport: req.user?.sport || 'cricket' }; if (type) filter.type = type;
-        if (req.user?.academyName) filter.academyName = req.user.academyName;
+        const { type, sport } = req.query;
+
+        const filter = {
+            sport: sport || req.user?.sport || 'cricket',
+        };
+
+        if (type) filter.type = type;
+
+        if (req.user?.academyName) {
+            filter.academyName = req.user.academyName;
+        }
+
         const resources = await Resource.find(filter);
+
         res.status(200).json(resources);
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -23,19 +23,19 @@ const SPORT_FACILITIES = {
         {
             name: 'Net 1 (Pace)', key: 'pace-1',
             slots: [
-                { time: '08:00', name: 'M. Pathirana', badge: 'pace', label: 'PACE' },
-                { time: '09:30', name: 'J. Bumrah', badge: 'pace', label: 'PACE' },
-                { time: '11:00', name: 'Open', badge: 'free', label: 'FREE' },
-            ],
+    { time: '08:00', name: 'Open', badge: 'free', label: 'FREE' },
+    { time: '09:30', name: 'Open', badge: 'free', label: 'FREE' },
+    { time: '11:00', name: 'Open', badge: 'free', label: 'FREE' },
+],
             options: ['PACE', 'FREE'],
         },
         {
             name: 'Net 2 (Spin)', key: 'spin-2',
-            slots: [
-                { time: '08:00', name: 'Y. Chahal', badge: 'spin', label: 'SPIN' },
-                { time: '09:30', name: 'R. Ashwin', badge: 'spin', label: 'SPIN' },
-                { time: '11:00', name: 'A. Patel', badge: 'spin', label: 'SPIN' },
-            ],
+           slots: [
+    { time: '08:00', name: 'Open', badge: 'free', label: 'FREE' },
+    { time: '09:30', name: 'Open', badge: 'free', label: 'FREE' },
+    { time: '11:00', name: 'Open', badge: 'free', label: 'FREE' },
+],
             options: ['SPIN', 'FREE'],
         },
         {
@@ -238,7 +238,20 @@ async function createResource(event) {
         const response = await fetch(`${API_BASE_URL}/resources`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ name, type, description, url, quantity }),
+            body: JSON.stringify({
+    name,
+    type:"equipment",
+    description,
+    url,
+    quantity,
+
+    equipmentName: name,
+    resourceType: "Equipment",
+    sport: getSport(),
+    available: quantity,
+    inUse: 0,
+    category: type,
+}),
         });
         if (!response.ok) throw new Error('Failed to create resource');
         closeResourceForm();
@@ -253,12 +266,16 @@ function buildEquipmentCard(item) {
     const statusClass = item.status === 'LOW' ? 'low' : item.status === 'OUT' ? 'out' : 'in-stock';
     return `
         <div class="equipment-card" data-equipment-id="${item._id}">
-            <h3>${item.name}</h3>
+            <h3>${item.equipmentName || item.name}</h3>
+<p><strong>Sport:</strong> ${item.sport}</p>
             <div class="equipment-condition">${item.condition || 'Standard issue'}</div>
             <div class="equipment-status ${statusClass}">${item.status || 'IN STOCK'}</div>
+            <div>Available: ${item.available ?? item.quantity}</div>
             <div class="qty-control">
                 <button class="qty-btn decrement" data-id="${item._id}">-</button>
-                <span class="qty-value" id="qty-${item._id}">${item.quantity || 0}</span>
+                <span class="qty-value" id="qty-${item._id}">
+    ${item.available ?? item.quantity ?? 0}
+</span>
                 <button class="qty-btn increment" data-id="${item._id}">+</button>
             </div>
         </div>`;
@@ -277,22 +294,31 @@ function renderEquipment() {
             const id = button.dataset.id;
             const item = resourcesState.equipment.find(e => e._id === id);
             if (!item) return;
-            item.quantity = (item.quantity || 0) + 1;
-            document.getElementById(`qty-${id}`).textContent = item.quantity;
-            await patchResource(id, { quantity: item.quantity });
+            item.available = (item.available || 0) + 1;
+
+document.getElementById(`qty-${id}`).textContent = item.available;
+
+await patchResource(id, {
+    available: item.available,
+});
         });
     });
 
-    document.querySelectorAll('.qty-btn.decrement').forEach(button => {
-        button.addEventListener('click', async () => {
-            const id = button.dataset.id;
-            const item = resourcesState.equipment.find(e => e._id === id);
-            if (!item) return;
-            item.quantity = Math.max(0, (item.quantity || 0) - 1);
-            document.getElementById(`qty-${id}`).textContent = item.quantity;
-            await patchResource(id, { quantity: item.quantity });
-        });
+   document.querySelectorAll('.qty-btn.decrement').forEach(button => {
+    button.addEventListener('click', async () => {
+        const id = button.dataset.id;
+        const item = resourcesState.equipment.find(e => e._id === id);
+        if (!item) return;
+
+       item.available = Math.max(0, (item.available || 0) - 1);
+
+document.getElementById(`qty-${id}`).textContent = item.available;
+
+await patchResource(id, {
+    available: item.available,
+});
     });
+});
 }
 
 function setupSlotForms() {
@@ -409,9 +435,14 @@ async function fetchResources() {
     if (!token) { redirectToLogin(); return; }
 
     try {
-        const equipRes = await fetch(`${API_BASE_URL}/resources?type=equipment`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
+       const equipRes = await fetch(
+    `${API_BASE_URL}/resources?resourceType=Equipment&sport=${getSport()}`,
+    {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    }
+);
         const equipData = await equipRes.json();
         if (!equipRes.ok) throw new Error('Unable to load equipment data');
         resourcesState.equipment = equipData;
@@ -434,10 +465,16 @@ async function patchResource(id, update) {
         });
         if (!response.ok) throw new Error('Failed to update resource');
         const updatedResource = await response.json();
-        if (updatedResource.type === 'equipment') {
-            const index = resourcesState.equipment.findIndex(e => e._id === updatedResource._id);
-            if (index > -1) { resourcesState.equipment[index] = updatedResource; renderEquipment(); }
-        }
+        if (updatedResource.resourceType === "Equipment") {
+   const index = resourcesState.equipment.findIndex(
+    e => e._id === updatedResource._id
+);
+
+if (index !== -1) {
+    resourcesState.equipment[index] = updatedResource;
+    renderEquipment();
+}
+}
     } catch (error) {
         console.error('Error updating resource:', error);
     }
