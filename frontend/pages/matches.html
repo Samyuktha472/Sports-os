@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Management</title>
+
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="../css/matches.css">
+</head>
+
+<body>
+
+<div id="sidebar"></div>
+
+<div class="main-content">
+
+    <h2>🏏 Schedule New Match</h2>
+
+    <div class="card">
+
+        <div class="form-group">
+            <label>Match Title</label>
+            <input type="text" id="matchTitle" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label>Opponent</label>
+            <input type="text" id="opponent" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="matchDate" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label>Time</label>
+            <input type="time" id="matchTime" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label>Venue</label>
+            <input type="text" id="venue" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label>Batch</label>
+
+            <select id="batch" class="form-control">
+
+            </select>
+
+        </div>
+
+        <div class="form-group">
+            <label>Notes</label>
+
+            <textarea id="notes" class="form-control"></textarea>
+
+        </div>
+
+        <button class="btn-primary" id="saveMatchBtn">
+            Save Match
+        </button>
+
+    </div>
+<div class="session-form">
+
+    <label>Activity</label>
+    <input type="text" id="activityName" placeholder="Cricket Practice">
+
+    <label>Batch</label>
+    <select id="batchName"></select>
+
+    <label>Coach</label>
+    <select id="coachName"></select>
+
+    <label>Date</label>
+    <input type="date" id="matchDate">
+
+    <label>Start Time</label>
+    <input type="time" id="startTime">
+
+    <label>End Time</label>
+    <input type="time" id="endTime">
+
+    <label>Location</label>
+    <input type="text" id="sessionLocation" placeholder="Ground 1">
+
+    <label>Notes</label>
+    <textarea id="coachNotes"></textarea>
+
+    <button id="saveSessionBtn" class="btn-primary">
+        Save Session
+    </button>
+
+</div>
+</div>
+
+<script src="../js/sidebar.js"></script>
+<script src="../js/matches.js"></script>
+
+</body>
+</html>

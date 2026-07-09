@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 const mongoose = require('mongoose');
 
 const matchSchema = new mongoose.Schema(
@@ -65,22 +65,9 @@ const matchSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('Match', matchSchema);
-=======
-const mongoose = require("mongoose");
 
-const matchSchema = new mongoose.Schema({
-    title: String,
-    opponent: String,
-    date: String,
-    time: String,
-    venue: String,
-    batch: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Batch"
-    },
-    notes: String,
-    academyName: String
-});
+
+
 
 module.exports = mongoose.model("Match", matchSchema);
->>>>>>> fdadcdb (Add match management backend)
+

@@ -1,7 +1,6 @@
-<<<<<<< HEAD
-const Match = require('../models/Match');
-const Timetable = require('../models/Timetable');
-const Batch = require('../models/Batch');
+const Match = require("../models/Match");
+const Timetable = require("../models/Timetable");
+const Batch = require("../models/Batch");
 
 // Create Match
 exports.createMatch = async (req, res) => {
@@ -18,7 +17,6 @@ exports.createMatch = async (req, res) => {
             squadSize
         } = req.body;
 
-        // Validation
         if (
             !opponent ||
             !sport ||
@@ -28,35 +26,31 @@ exports.createMatch = async (req, res) => {
             !endTime
         ) {
             return res.status(400).json({
-                message: 'Please fill all required fields.'
+                message: "Please fill all required fields."
             });
         }
 
-        // Check batch exists
         const batchData = await Batch.findById(batch);
 
         if (!batchData) {
             return res.status(404).json({
-                message: 'Batch not found.'
+                message: "Batch not found."
             });
         }
 
-        // Check selected sport matches batch sport
         if (batchData.sport !== sport) {
             return res.status(400).json({
-                message: 'Selected batch does not belong to selected sport.'
+                message: "Selected batch does not belong to selected sport."
             });
         }
 
-        // Get day from selected match date
-        const dayOfWeek = new Date(matchDate).toLocaleDateString('en-US', {
-            weekday: 'long'
+        const dayOfWeek = new Date(matchDate).toLocaleDateString("en-US", {
+            weekday: "long"
         });
 
-        // Check timetable clash
         const clash = await Timetable.findOne({
-            batch: batch,
-            dayOfWeek: dayOfWeek,
+            batch,
+            dayOfWeek,
             startTime: { $lt: endTime },
             endTime: { $gt: startTime }
         });
@@ -67,7 +61,6 @@ exports.createMatch = async (req, res) => {
             });
         }
 
-        // Create match
         const match = await Match.create({
             opponent,
             format,
@@ -85,7 +78,7 @@ exports.createMatch = async (req, res) => {
         res.status(201).json(match);
 
     } catch (error) {
-        console.error('Create Match Error:', error);
+        console.error(error);
         res.status(500).json({
             message: error.message
         });
@@ -93,46 +86,44 @@ exports.createMatch = async (req, res) => {
 };
 
 // Get nearest upcoming match
-// Get nearest upcoming match
 exports.getUpcomingMatch = async (req, res) => {
     try {
+
         const filters = {
             matchDate: { $gte: new Date() }
         };
 
-        if (req.user.academyName) {
+        if (req.user.academyName)
             filters.academyName = req.user.academyName;
-        }
 
-        if (req.user.sport) {
+        if (req.user.sport)
             filters.sport = req.user.sport;
-        }
 
         const match = await Match.findOne(filters)
-            .populate({
-                path: "batch",
-                select: "name sport"
-            })
+            .populate("batch", "name sport")
             .sort({ matchDate: 1 });
 
-        if (!match) {
+        if (!match)
             return res.status(200).json(null);
-        }
 
-      console.log("Upcoming Match:", match);
-res.status(200).json(match);
+        res.status(200).json(match);
 
     } catch (error) {
-        console.error("Get Upcoming Match Error:", error);
+
+        console.error(error);
+
         res.status(500).json({
             message: error.message
         });
+
     }
 };
 
 // Get all matches
 exports.getAllMatches = async (req, res) => {
+
     try {
+
         const filters = {};
 
         if (req.user.academyName)
@@ -142,47 +133,40 @@ exports.getAllMatches = async (req, res) => {
             filters.sport = req.user.sport;
 
         const matches = await Match.find(filters)
-            .populate('batch', 'name')
+            .populate("batch", "name")
             .sort({ matchDate: 1 });
 
         res.status(200).json(matches);
 
     } catch (error) {
+
         console.error(error);
+
         res.status(500).json({
             message: error.message
         });
-=======
-const Match = require("../models/Match");
 
-exports.createMatch = async (req, res) => {
-    try {
-        const match = new Match(req.body);
-        await match.save();
-        res.status(201).json(match);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Failed to create match" });
     }
 };
 
-exports.getMatches = async (req, res) => {
-    try {
-        const matches = await Match.find().sort({ date: 1 });
-        res.json(matches);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Failed to fetch matches" });
-    }
-};
-
+// Delete Match
 exports.deleteMatch = async (req, res) => {
+
     try {
+
         await Match.findByIdAndDelete(req.params.id);
-        res.json({ message: "Match deleted successfully" });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Failed to delete match" });
->>>>>>> fdadcdb (Add match management backend)
+
+        res.json({
+            message: "Match deleted successfully"
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: error.message
+        });
+
     }
 };
