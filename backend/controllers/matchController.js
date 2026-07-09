@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const Match = require('../models/Match');
 const Timetable = require('../models/Timetable');
 const Batch = require('../models/Batch');
@@ -151,5 +152,37 @@ exports.getAllMatches = async (req, res) => {
         res.status(500).json({
             message: error.message
         });
+=======
+const Match = require("../models/Match");
+
+exports.createMatch = async (req, res) => {
+    try {
+        const match = new Match(req.body);
+        await match.save();
+        res.status(201).json(match);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Failed to create match" });
+    }
+};
+
+exports.getMatches = async (req, res) => {
+    try {
+        const matches = await Match.find().sort({ date: 1 });
+        res.json(matches);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Failed to fetch matches" });
+    }
+};
+
+exports.deleteMatch = async (req, res) => {
+    try {
+        await Match.findByIdAndDelete(req.params.id);
+        res.json({ message: "Match deleted successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Failed to delete match" });
+>>>>>>> fdadcdb (Add match management backend)
     }
 };
