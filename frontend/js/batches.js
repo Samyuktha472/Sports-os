@@ -347,6 +347,7 @@ async function saveAttendance() {
 
         if (res.ok) {
             showToast(`✅ Attendance saved for ${date}!`, 'success');
+            localStorage.setItem("attendanceUpdated", "true");
             loadAttendanceHistory();
         } else {
             showToast('❌ Failed to save attendance', 'error');
@@ -578,6 +579,7 @@ async function saveCoachAttendance() {
 
         if (res.ok) {
             showToast(`✅ Coach attendance saved for ${date}!`, 'success');
+            localStorage.setItem("attendanceUpdated", "true");
             loadCoachAttendanceHistory();
         } else {
             showToast('❌ Failed to save coach attendance', 'error');
