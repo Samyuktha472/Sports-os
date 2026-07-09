@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports OS - Match Mode</title>
+
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/sidebar.css">
+    <link rel="stylesheet" href="../css/match-mode.css">
+    <style>
+        .centered-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--color-dark);
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .primary-btn {
+            width: 100%;
+            background-color: var(--color-accent);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="sidebar"></div>
+
+<div class="main-content">
+
+    <header class="match-header" style="text-align: center; display: block;">
+        <h1 style="margin-bottom: 10px;">Plan Session Schedule</h1>
+        <div id="sessionHeader">
+            <h2 id="sessionTitle" style="font-size: 20px; color: var(--color-muted);">Today's Session</h2>
+            <p id="sessionSubtitle">Loading today's timetable...</p>
+        </div>
+    </header>
+
+    <div class="centered-container">
+        <section class="card">
+            <h2>Session Information</h2>
+
+            <div class="form-group">
+                <label>Activity</label>
+                <input type="text" id="activityName" class="form-control" placeholder="Enter activity">
+            </div>
+
+            <div class="form-group">
+                <label>Batch</label>
+                <input type="text" id="batch" class="form-control" placeholder="Enter Batch Name">
+            </div>
+
+            <div class="form-group">
+                <label>Coach</label>
+                <input type="text" id="coach" class="form-control" placeholder="Enter Coach Name">
+            </div>
+
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="matchDate" class="form-control">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Start Time</label>
+                    <input type="time" id="startTime" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label>End Time</label>
+                    <input type="time" id="endTime" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Venue</label>
+                <input type="text" id="sessionLocation" class="form-control" placeholder="Ground Name">
+            </div>
+
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="coachNotes" class="form-control" rows="4" placeholder="Session notes..."></textarea>
+            </div>
+
+            <button id="saveSessionBtn" class="primary-btn">
+                💾 Save Session
+            </button>
+        </section>
+    </div>
+
+</div>
+
+<script src="../js/sidebar.js"></script>
+<script src="../js/match-mode.js"></script>
+
+</body>
+
+</html>

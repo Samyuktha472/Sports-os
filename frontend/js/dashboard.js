@@ -244,6 +244,7 @@ function renderDashboard() {
     const sport = user?.sport || '';
     const sportIcon = { cricket: '🏏', tennis: '🎾', kabaddi: '🤼' }[sport] || '🏆';
     const token = getToken();
+    loadUpcomingMatch();
 
     // Next match card — real data from API, no hardcoded fallback
     const matchTitleEl = document.getElementById('nextMatchTitle');
@@ -310,25 +311,29 @@ if (matchTagsEl) {
             practiceListEl.innerHTML = '<p class="card-subtext">No upcoming sessions.</p>';
         } else {
             practiceListEl.innerHTML = '<p class="card-subtext">Loading sessions...</p>';
-            fetch(`${API_BASE_URL}/sessions`, {
+            fetch(`${API_BASE_URL}/timetable`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             .then(r => r.ok ? r.json() : [])
-            .then(sessions => {
-                if (!sessions.length) {
+            .then(slots => {
+                if (!slots.length) {
                     practiceListEl.innerHTML = '<p class="card-subtext">No sessions logged yet. <a href="sessions.html">Add a session →</a></p>';
                     return;
                 }
-                practiceListEl.innerHTML = sessions.slice(0, 3).map(s => `
-                    <div class="practice-row">
-                        <span class="status-dot dark"></span>
-                        <div class="practice-info">
-                            <p class="practice-title">${s.title || s.activityType || 'Session'}</p>
-                            <p class="practice-meta">${s.coachName || s.batchName || ''}</p>
-                        </div>
-                        <span class="practice-time">${s.startTime || ''}</span>
-                    </div>
-                `).join('');
+                practiceListEl.innerHTML = slots.slice(0,3).map(slot => `
+<div class="practice-row">
+    <span class="status-dot dark"></span>
+
+    <div class="practice-info">
+        <p class="practice-title">${slot.activityType}</p>
+        <p class="practice-meta">${slot.dayOfWeek}</p>
+    </div>
+
+    <span class="practice-time">
+        ${slot.startTime} - ${slot.endTime}
+    </span>
+</div>
+`).join('');
             })
             .catch(() => {
                 practiceListEl.innerHTML = '<p class="card-subtext">Unable to load sessions.</p>';
@@ -337,9 +342,7 @@ if (matchTagsEl) {
     }
 
     // Equipment snapshot — real data from API
-    const equipmentTitleEl = document.getElementById('equipmentTitle');
     const equipmentStatsEl = document.getElementById('equipmentStats');
-    if (equipmentTitleEl) equipmentTitleEl.textContent = `${sportIcon} Equipment Snapshot`;
     if (equipmentStatsEl) {
         equipmentStatsEl.innerHTML = '<p class="card-subtext">Loading equipment...</p>';
         fetch(`${API_BASE_URL}/resources`, {
@@ -351,7 +354,7 @@ if (matchTagsEl) {
                 equipmentStatsEl.innerHTML = '<p class="card-subtext">No equipment added yet. <a href="resources.html">Add equipment →</a></p>';
                 return;
             }
-            equipmentStatsEl.innerHTML = resources.slice(0, 3).map(r => `
+            equipmentStatsEl.innerHTML = resources.slice(0, 4).map(r => `
                 <div class="stat-box">
                     <p class="stat-label">${(r.name || '').toUpperCase()}</p>
                     <p class="stat-value">${r.quantity ?? '—'}</p>
@@ -367,17 +370,24 @@ if (matchTagsEl) {
     // Role-based visibility
     if (role === 'athlete') {
         const alertsCard = document.querySelector('.workload-card');
-        const equipCard = document.querySelector('.equipment-card');
         const attendanceSummaryCard = document.querySelector('.attendance-summary-card');
+<<<<<<< HEAD
+=======
+
+        if (matchCard) matchCard.style.display = 'none';
+>>>>>>> 892c622 (Add professional dashboard and match mode UI)
         if (alertsCard) alertsCard.style.display = 'none';
-        if (equipCard) equipCard.style.display = 'none';
         if (attendanceSummaryCard) attendanceSummaryCard.style.display = 'none';
 
+<<<<<<< HEAD
         // Athletes can see the upcoming match, but shouldn't create/edit it
         const enterMatchBtn = document.getElementById('enterMatchModeBtn');
         const viewSquadBtn = document.getElementById('viewSquadBtn');
         if (enterMatchBtn) enterMatchBtn.style.display = 'none';
         if (viewSquadBtn) viewSquadBtn.style.display = 'none';
+=======
+        // Keep equipment and KPI cards visible as per user request
+>>>>>>> 892c622 (Add professional dashboard and match mode UI)
     }
 
     if (role === 'coach') {
@@ -394,14 +404,24 @@ if (matchTagsEl) {
 // ─────────────────────────────────────────────────────────────
 async function loadAttendanceSummary() {
     const user = getStoredUser();
-    if (user?.role === 'athlete') return;
+    if (user?.role === 'athlete') {
+        const attendanceSummaryCard = document.querySelector('.attendance-summary-card');
+        if (attendanceSummaryCard) attendanceSummaryCard.style.display = 'none';
+        return;
+    }
 
     const statsEl = document.getElementById('attendanceSummaryStats');
     const subEl = document.getElementById('attendanceSummarySub');
-    if (!statsEl) return;
+    const presentTodayEl = document.getElementById('presentToday');
+    const presentTodaySubEl = document.getElementById('presentTodaySub');
+    const totalAthletesEl = document.getElementById('totalAthletes');
+
+    if (!statsEl && !presentTodayEl) return;
 
     const token = getToken();
-    const today = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    // Local date string YYYY-MM-DD
+    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
 
     try {
         const athletesRes = await fetch(`${API_BASE_URL}/roster/athletes`, {
@@ -410,6 +430,9 @@ async function loadAttendanceSummary() {
         const athletes = athletesRes.ok ? await athletesRes.json() : [];
         const totalAthletes = Array.isArray(athletes) ? athletes.length : 0;
 
+        // Sync total athletes count to the first card
+        if (totalAthletesEl) totalAthletesEl.textContent = totalAthletes;
+
         const batchesRes = await fetch(`${API_BASE_URL}/batches`, {
             headers: { Authorization: `Bearer ${token}` },
         });
@@ -417,54 +440,93 @@ async function loadAttendanceSummary() {
 
         let present = 0;
         let marked = 0;
+        let coachPresent = 0;
+        let coachTotal = 0;
 
+        // Fetch Athlete Attendance
         if (Array.isArray(batches) && batches.length > 0) {
             const attendanceResults = await Promise.all(
                 batches.map(b =>
                     fetch(`${API_BASE_URL}/attendance?batchId=${b._id}&date=${today}`, {
                         headers: { Authorization: `Bearer ${token}` },
                     })
-                        .then(r => (r.ok ? r.json() : null))
-                        .catch(() => null)
+                    .then(r => (r.ok ? r.json() : null))
+                    .catch(() => null)
                 )
             );
+
+            const presentAthletes = new Set();
+            const markedAthletes = new Set();
 
             attendanceResults.forEach(doc => {
                 if (doc && Array.isArray(doc.records)) {
                     doc.records.forEach(r => {
-                        marked++;
-                        if (r.status === 'present') present++;
+                        if (r.athlete) {
+                            markedAthletes.add(r.athlete.toString() || r.athlete);
+                            if (r.status === 'present') {
+                                presentAthletes.add(r.athlete.toString() || r.athlete);
+                            }
+                        }
                     });
                 }
             });
+            present = presentAthletes.size;
+            marked = markedAthletes.size;
         }
 
-        // ✅ FIX: divide by totalAthletes, not marked
+        // Fetch Coach Attendance
+        try {
+            const coachRes = await fetch(`${API_BASE_URL}/coach-attendance?date=${today}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const coachData = coachRes.ok ? await coachRes.json() : null;
+            if (coachData && Array.isArray(coachData.records)) {
+                coachTotal = coachData.records.length;
+                coachPresent = coachData.records.filter(r => r.status === 'present').length;
+            }
+        } catch (err) {
+            console.error('Error fetching coach attendance:', err);
+        }
+
         const pct = totalAthletes > 0 ? Math.round((present / totalAthletes) * 100) : 0;
+
+        // Update Top KPI Card (Now includes Coaches if any are marked)
+        if (presentTodayEl) {
+            presentTodayEl.textContent = present + coachPresent;
+            if (presentTodaySubEl) {
+                let subText = marked > 0 ? `${pct}% Athlete Rate` : 'No athletes marked';
+                if (coachTotal > 0) {
+                    subText += ` · ${coachPresent}/${coachTotal} Coaches`;
+                }
+                presentTodaySubEl.textContent = subText;
+            }
+        }
+
+        // Update Detailed Summary Card
+        if (statsEl) {
+            statsEl.innerHTML = `
+                <div class="stat-box">
+                    <p class="stat-label">ATHLETES PRESENT</p>
+                    <p class="stat-value">${present}/${totalAthletes}</p>
+                </div>
+                <div class="stat-box">
+                    <p class="stat-label">COACHES PRESENT</p>
+                    <p class="stat-value">${coachPresent}/${coachTotal || '—'}</p>
+                </div>
+                <div class="stat-box" style="grid-column: span 2;">
+                    <p class="stat-label">DAILY ATTENDANCE RATE (ATHLETES)</p>
+                    <p class="stat-value">${totalAthletes > 0 ? pct + '%' : '—'}</p>
+                </div>`;
+        }
 
         if (subEl) {
             subEl.textContent = marked > 0
-                ? `${present} present · ${marked - present} absent · ${totalAthletes - marked} not yet marked`
-                : 'No attendance marked yet today';
+                ? `${present} present · ${marked - present} absent · ${totalAthletes - marked} pending`
+                : 'No records for today';
         }
 
-        statsEl.innerHTML = `
-            <div class="stat-box">
-                <p class="stat-label">TOTAL ATHLETES</p>
-                <p class="stat-value">${totalAthletes}</p>
-            </div>
-            <div class="stat-box">
-                <p class="stat-label">PRESENT TODAY</p>
-                <p class="stat-value">${present}</p>
-            </div>
-            <div class="stat-box">
-                <p class="stat-label">ATTENDANCE %</p>
-                <p class="stat-value">${totalAthletes > 0 ? pct + '%' : '—'}</p>
-            </div>`;
     } catch (err) {
         console.error('Error loading attendance summary:', err);
-        if (subEl) subEl.textContent = 'Unable to load attendance.';
-        statsEl.innerHTML = '<p class="stat-label">No data available.</p>';
     }
 }
 
@@ -697,7 +759,17 @@ async function renderAthleteTodos(content) {
         });
     });
 }
+if(localStorage.getItem("dashboardUpdated")){
 
+loadUpcomingMatch();
+
+loadDashboardCards();
+
+loadAttendanceSummary();
+
+localStorage.removeItem("dashboardUpdated");
+
+}
 // ─────────────────────────────────────────────────────────────
 // Match Mode — real match creation
 // ─────────────────────────────────────────────────────────────
@@ -867,6 +939,31 @@ async function handleCreateMatch() {
 // Init
 // ─────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener("focus",()=>{
+
+loadAttendanceSummary();
+
+loadDashboardCards();
+
+loadUpcomingMatch();
+document.getElementById("saveSessionBtn")
+    ?.addEventListener("click", saveSession);
+});
+if (localStorage.getItem("sessionUpdated")) {
+
+    loadUpcomingMatch();
+
+    loadDashboardCards();
+
+    loadAttendanceSummary();
+
+    localStorage.removeItem("sessionUpdated");
+}
+    if (localStorage.getItem("attendanceUpdated") === "true") {
+    loadAttendanceSummary();
+    loadDashboardCards();
+    localStorage.removeItem("attendanceUpdated");
+}
     const user = getStoredUser();
     if (!user || !getToken()) { redirectToLogin(); return; }
 
@@ -874,12 +971,14 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDashboard();
     loadAttendanceSummary();
     loadWorkloadAlerts();
+    loadDashboardCards();
     renderInviteSection();
 
     // Button handlers
     document.getElementById('viewSquadBtn')?.addEventListener('click', () => {
         window.location.href = 'batches.html';
     });
+<<<<<<< HEAD
    document.getElementById('enterMatchModeBtn')?.addEventListener('click', async () => {
     const overlay = document.getElementById('matchModalOverlay');
 
@@ -892,6 +991,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('matchModalCloseBtn')?.addEventListener('click', closeMatchModal);
     document.getElementById('matchModalCancelBtn')?.addEventListener('click', closeMatchModal);
     document.getElementById('matchCreateBtn')?.addEventListener('click', handleCreateMatch);
+=======
+    document.getElementById('enterMatchModeBtn')?.addEventListener('click', () => {
+       window.location.href = "match-mode.html";
+    });
+>>>>>>> 892c622 (Add professional dashboard and match mode UI)
     document.getElementById('inviteCreateBtn')?.addEventListener('click', handleInviteCreate);
     document.getElementById('copyInviteLinkBtn')?.addEventListener('click', copyInviteLink);
     document.getElementById("matchSport").addEventListener("change", loadMatchBatches);
@@ -901,6 +1005,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const topRow = document.getElementById('athleteTopRow');
         if (topRow) topRow.style.display = 'grid';
 
+        const secondaryRow = document.getElementById('athleteSecondaryRow');
+        if (secondaryRow) secondaryRow.style.display = 'grid';
+
         const content = getSportContent();
         renderAthleteProfile(user);
         renderAthletePerfStats();
@@ -909,3 +1016,87 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAthleteTodos(content);
     }
 });
+// ================= Dashboard KPI Cards =================
+
+async function loadDashboardCards() {
+
+    const token = getToken();
+
+    try {
+
+        const athleteRes = await fetch(`${API_BASE_URL}/roster/athletes`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const athletes = athleteRes.ok ? await athleteRes.json() : [];
+
+        const totalAthletes = document.getElementById("totalAthletes");
+        if (totalAthletes) {
+            totalAthletes.textContent = athletes.length;
+        }
+
+        const resourceRes = await fetch(`${API_BASE_URL}/resources`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const resources = resourceRes.ok ? await resourceRes.json() : [];
+
+        const equipmentCount = document.getElementById("equipmentCount");
+        if (equipmentCount) {
+            equipmentCount.textContent = resources.length;
+        }
+
+        const matchRes = await fetch(`${API_BASE_URL}/matches`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const matches = matchRes.ok ? await matchRes.json() : [];
+
+        const matchCount = document.getElementById("matchCount");
+        if (matchCount) {
+            matchCount.textContent = matches.length;
+        }
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+async function loadUpcomingMatch() {
+    const token = getToken();
+    try {
+        // 1. Try to load actual matches saved via Match Mode
+        const matchRes = await fetch(`${API_BASE_URL}/matches`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const matches = matchRes.ok ? await matchRes.json() : [];
+
+        if (matches && matches.length > 0) {
+            const latest = matches[matches.length - 1]; // Show most recent
+            document.getElementById("nextMatchTitle").textContent = latest.title || "Match Session";
+            document.getElementById("nextMatchTime").textContent = `${latest.date} · ${latest.time}`;
+            document.getElementById("nextMatchLocation").textContent = latest.venue || "TBD";
+            return;
+        }
+
+        // 2. Fallback to Timetable if no matches are saved
+        const ttRes = await fetch(`${API_BASE_URL}/timetable`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const sessions = ttRes.ok ? await ttRes.json() : [];
+
+        if (sessions && sessions.length > 0) {
+            const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+            const todaySlot = sessions.find(s => s.dayOfWeek === today) || sessions[0];
+
+            document.getElementById("nextMatchTitle").textContent = todaySlot.activityType;
+            document.getElementById("nextMatchTime").textContent = `${todaySlot.startTime} - ${todaySlot.endTime}`;
+            document.getElementById("nextMatchLocation").textContent = todaySlot.location;
+
+            if (document.getElementById("matchCount")) {
+                document.getElementById("matchCount").textContent = sessions.length;
+            }
+        }
+    } catch (err) {
+        console.error("Error loading upcoming match:", err);
+    }
+}
