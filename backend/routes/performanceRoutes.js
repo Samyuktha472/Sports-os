@@ -1,19 +1,14 @@
 const express = require('express');
 const { protect } = require('../middleware/authMiddleware');
-const {
-    getPerformanceData,
-    addPerformanceRecord,
-    getBowlerWorkload,
-    getRealMetrics,
-    getWorkloadAlerts,
-} = require('../controllers/performanceController');
+const performanceController = require('../controllers/performanceController');
 
+console.log("CONTROLLER CHECK:");
+console.log(performanceController);
 const router = express.Router();
-
-router.get('/real', protect, getRealMetrics);
-router.get('/workload', protect, getBowlerWorkload);
-router.get('/workload-alerts', protect, getWorkloadAlerts);
-router.get('/', protect, getPerformanceData);
-router.post('/', protect, addPerformanceRecord);
+router.get('/real', protect, performanceController.getRealMetrics); 
+router.get('/workload', protect, performanceController.getBowlerWorkload); 
+router.get('/workload-alerts', protect, performanceController.getWorkloadAlerts);
+router.get('/', protect, performanceController.getPerformanceData); 
+router.post('/', protect, performanceController.addPerformanceRecord);
 
 module.exports = router;

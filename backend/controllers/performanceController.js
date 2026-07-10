@@ -2,6 +2,7 @@ const Performance = require('../models/Performance');
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const Session = require('../models/Session');
+console.log("=== PERFORMANCE CONTROLLER LOADED ===");
 
 // ── Sport guard ───────────────────────────────────────────────
 async function verifyAthleteSport(athleteId, userSport) {
@@ -44,22 +45,12 @@ exports.getPerformanceData = async (req, res) => {
         const performance = await Performance.find(filters).sort({ recordedDate: 1 });
 
         if (!performance.length) {
-            // Only fall back to demo data for generic queries (no specific athlete).
-            // A real athlete with no recorded data yet should see "no data", not fake numbers.
-            if (!athleteId) {
-                const fallback = mockData[metric] || Object.values(mockData)[0];
-                return res.status(200).json({
-                    records: fallback.records,
-                    benchmark: fallback.benchmark,
-                    athlete: fallback.athlete,
-                    metric: fallback.metric,
-                });
-            }
+            const fallback = mockData[metric] || Object.values(mockData)[0];
             return res.status(200).json({
-                records: [],
-                benchmark: null,
-                athlete: athleteId,
-                metric: metric || null,
+                records: fallback.records,
+                benchmark: fallback.benchmark,
+                athlete: fallback.athlete,
+                metric: fallback.metric,
             });
         }
 
@@ -169,10 +160,10 @@ exports.getWorkloadAlerts = async (req, res) => {
         athletes.forEach(a => { athleteMap[a._id.toString()] = a.name; });
 
         const records = await Performance.find({
-            athlete: { $in: athleteIds },
-            metric: config.metric,
-            recordedDate: { $gte: sevenDaysAgo },
-        }).lean();
+    athlete: { $in: athleteIds },
+    metric: config.metric,
+    recordedDate: { $gte: sevenDaysAgo },
+}).lean();
 
         const totals = {};
         records.forEach(r => {
@@ -206,6 +197,8 @@ exports.getWorkloadAlerts = async (req, res) => {
     }
 };
 exports.getRealMetrics = async (req, res) => {
+    console.log("******** getRealMetrics CALLED ********");
+
     try {
         const { athleteId, metric, months, granularity } = req.query;
         const numMonths = parseInt(months, 10) || 6;
@@ -230,72 +223,111 @@ exports.getRealMetrics = async (req, res) => {
                 });
             }
 
-            if (metric === 'attendance') {
-                const attendanceRecords = await Attendance.find({ 'records.athlete': athleteId });
-                const values = dayBuckets.map(bucket => {
-                    const rec = attendanceRecords.find(a => {
-                        const ad = new Date(a.date);
-                        return ad.getFullYear() === bucket.year &&
-                            ad.getMonth() === bucket.month &&
-                            ad.getDate() === bucket.day;
-                    });
-                    if (!rec) return 0;
-                    const entry = rec.records.find(r => String(r.athlete) === String(athleteId));
-                    if (!entry) return 0;
-                    return entry.status === 'present' ? 100 : 0;
-                });
-                return res.status(200).json({
-                    labels: dayBuckets.map(b => b.label),
-                    values,
-                    metric: `Attendance % — ${new Date(year, mon - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
-                    benchmark: null,
-                });
-            }
+       if (metric === 'attendance') {
+        console.log("===== MONTHLY ATTENDANCE BLOCK =====");
+console.log("Athlete ID:", athleteId);
 
-            if (metric === 'sessions') {
-                const athlete = await User.findById(athleteId);
-                const athleteName = athlete?.name;
-                const sessions = await Session.find({ athleteName: { $exists: true, $ne: '' } });
-                const values = dayBuckets.map(bucket => {
-                    return sessions.filter(s => {
-                        const sd = new Date(s.sessionDate);
-                        return s.athleteName === athleteName &&
-                            sd.getFullYear() === bucket.year &&
-                            sd.getMonth() === bucket.month &&
-                            sd.getDate() === bucket.day;
-                    }).length;
-                });
-                return res.status(200).json({
-                    labels: dayBuckets.map(b => b.label),
-                    values,
-                    metric: `Sessions — ${new Date(year, mon - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
-                    benchmark: null,
-                });
-            }
+    console.log("Requested Athlete:", athleteId);
 
-            const mockMonthly = {
-                'Batting Strike Rate': { data: [110, 118, 132, 128, 148, 162], benchmark: 143 },
-                'Bowling Speed (km/h)': { data: [118, 122, 125, 121, 128, 132], benchmark: 130 },
-                'Fielding Accuracy (%)': { data: [72, 75, 78, 74, 80, 85], benchmark: 80 },
-                'Bowling Economy': { data: [7.2, 6.8, 6.5, 7.0, 6.2, 5.9], benchmark: 6.5 },
-                'Batting Average': { data: [32, 35, 38, 36, 42, 48], benchmark: 40 },
-                'Catches per Session': { data: [2, 3, 2, 4, 3, 5], benchmark: 4 },
-            };
-            const dataset = mockMonthly[metric] || mockMonthly['Batting Strike Rate'];
-            const now = new Date();
-            const monthsAgo = (now.getFullYear() - year) * 12 + (now.getMonth() - (mon - 1));
-            const idx = Math.max(0, Math.min(5, 5 - monthsAgo));
-            const base = dataset.data[idx];
-            const values = dayBuckets.map(bucket => {
-                const variation = Math.sin(bucket.day * 0.7 + idx) * 0.05 * base;
-                return Math.round((base + variation) * 10) / 10;
-            });
-            return res.status(200).json({
-                labels: dayBuckets.map(b => b.label),
-                values,
-                metric: `${metric} — ${new Date(year, mon - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
-                benchmark: dataset.benchmark,
-            });
+    const attendanceRecords = await Attendance.find({
+        'records.athlete': athleteId
+    });
+    console.log("Requested Athlete ID:", athleteId);
+
+attendanceRecords.forEach(doc => {
+    doc.records.forEach(r => {
+        console.log("Attendance Athlete:", r.athlete.toString());
+    });
+});
+    console.log("Requested Athlete:", athleteId);
+
+attendanceRecords.forEach
+
+    console.log("Attendance Records Found:", attendanceRecords.length);
+
+    const values = dayBuckets.map(bucket => {
+        const rec = attendanceRecords.find(a => {
+            const ad = new Date(a.date);
+            return ad.getFullYear() === bucket.year &&
+                ad.getMonth() === bucket.month &&
+                ad.getDate() === bucket.day;
+        });
+
+        if (!rec) return 0;
+
+        const entry = rec.records.find(r => String(r.athlete) === String(athleteId));
+
+        if (!entry) return 0;
+
+        return entry.status === 'present' ? 100 : 0;
+    });
+
+    return res.status(200).json({
+        labels: dayBuckets.map(b => b.label),
+        values,
+        metric: 'Attendance (daily)',
+        benchmark: null,
+    });
+}
+
+           if (metric === 'sessions') {
+    const sessions = await Session.find({ athleteName: { $exists: true, $ne: '' } });
+    const athlete = await User.findById(athleteId);
+    const athleteName = athlete?.name;
+
+    const counts = monthBuckets.map(bucket => {
+        return sessions.filter(s => {
+            const sd = new Date(s.sessionDate);
+
+            return s.athleteName === athleteName &&
+                sd.getFullYear() === bucket.year &&
+                sd.getMonth() === bucket.month;
+        }).length;
+    });
+
+    return res.status(200).json({
+        labels: monthBuckets.map(b => b.label),
+        values: counts,
+        metric: 'Session Count',
+        benchmark: null,
+    });
+}
+
+            const records = await Performance.find({
+    athlete: athleteId,
+    metric,
+    recordedDate: {
+        $gte: new Date(year, mon - 1, 1),
+        $lt: new Date(year, mon, 1)
+    }
+}).sort({ recordedDate: 1 });
+console.log("===== PICK MONTH =====");
+console.log("Metric:", metric);
+console.log("Records:", records);
+
+const values = dayBuckets.map(bucket => {
+    const rec = records.find(r => {
+        const d = new Date(r.recordedDate);
+        return (
+            d.getFullYear() === bucket.year &&
+            d.getMonth() === bucket.month &&
+            d.getDate() === bucket.day
+        );
+    });
+
+    return rec ? Number(rec.value) : 0;
+});
+return res.status(200).json({
+    labels: dayBuckets.map(b => b.label),
+    values,
+    metric: `${metric} — ${new Date(year, mon - 1).toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric'
+    })}`,
+    benchmark: records.length
+        ? records[records.length - 1].benchmark
+        : null,
+});
         }
 
         const isDaily = granularity === 'daily';
@@ -318,7 +350,11 @@ exports.getRealMetrics = async (req, res) => {
             }
 
             if (metric === 'attendance') {
-                const attendanceRecords = await Attendance.find({ 'records.athlete': athleteId });
+    const attendanceRecords = await Attendance.find({});
+
+    console.log("ATHLETE ID FROM REQUEST:", athleteId);
+    console.log("Attendance Records:");
+    console.log(attendanceRecords);
                 const values = dayBuckets.map(bucket => {
                     const rec = attendanceRecords.find(a => {
                         const ad = new Date(a.date);
@@ -360,32 +396,42 @@ exports.getRealMetrics = async (req, res) => {
                 });
             }
 
-            const mockMonthly = {
-                'Batting Strike Rate': { data: [110, 118, 132, 128, 148, 162], benchmark: 143 },
-                'Bowling Speed (km/h)': { data: [118, 122, 125, 121, 128, 132], benchmark: 130 },
-                'Fielding Accuracy (%)': { data: [72, 75, 78, 74, 80, 85], benchmark: 80 },
-                'Bowling Economy': { data: [7.2, 6.8, 6.5, 7.0, 6.2, 5.9], benchmark: 6.5 },
-                'Batting Average': { data: [32, 35, 38, 36, 42, 48], benchmark: 40 },
-                'Catches per Session': { data: [2, 3, 2, 4, 3, 5], benchmark: 4 },
-            };
-            const dataset = mockMonthly[metric] || mockMonthly['Batting Strike Rate'];
-            const now2 = new Date();
-            const values = dayBuckets.map(bucket => {
-                const monthsAgo = (now2.getFullYear() - bucket.year) * 12 +
-                    (now2.getMonth() - bucket.month);
-                const idx = Math.max(0, Math.min(5, 5 - monthsAgo));
-                const base = dataset.data[idx];
-                const variation = (Math.sin(bucket.day * 0.7 + idx) * 0.05 * base);
-                return Math.round((base + variation) * 10) / 10;
-            });
-            return res.status(200).json({
-                labels: dayBuckets.map(b => b.label),
-                values,
-                metric: `${metric} (daily)`,
-                benchmark: dataset.benchmark,
-            });
-        }
+            const records = await Performance.find({
+    athlete: athleteId,
+    metric,
+  recordedDate: {
+    $gte: new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 29
+    ),
+    $lte: now
+}
+}).sort({ recordedDate: 1 });
 
+const values = dayBuckets.map(bucket => {
+    const rec = records.find(r => {
+        const d = new Date(r.recordedDate);
+
+        return (
+            d.getFullYear() === bucket.year &&
+            d.getMonth() === bucket.month &&
+            d.getDate() === bucket.day
+        );
+    });
+
+    return rec ? Number(rec.value) : 0;
+});
+
+return res.status(200).json({
+    labels: dayBuckets.map(b => b.label),
+    values,
+    metric: `${metric} (daily)`,
+    benchmark: records.length
+        ? records[records.length - 1].benchmark
+        : null,
+});
+        }
         // --- MONTHLY ---
         const monthBuckets = [];
         const now = new Date();
@@ -397,29 +443,37 @@ exports.getRealMetrics = async (req, res) => {
                 month: d.getMonth(),
             });
         }
+if (metric === 'sessions') {
+    const sessions = await Session.find({ athleteName: { $exists: true, $ne: '' } });
+    const athlete = await User.findById(athleteId);
+    const athleteName = athlete?.name;
 
-        if (metric === 'sessions') {
-            const sessions = await Session.find({ athleteName: { $exists: true, $ne: '' } });
-            const athlete = await User.findById(athleteId);
-            const athleteName = athlete?.name;
-            const counts = monthBuckets.map(bucket => {
-                return sessions.filter(s => {
-                    const sd = new Date(s.sessionDate);
-                    return s.athleteName === athleteName &&
-                        sd.getFullYear() === bucket.year &&
-                        sd.getMonth() === bucket.month;
-                }).length;
-            });
-            return res.status(200).json({
-                labels: monthBuckets.map(b => b.label),
-                values: counts,
-                metric: 'Session Count',
-                benchmark: null,
-            });
-        }
+    console.log("Selected athlete:", athleteName);
+    console.log("Sessions found:", sessions);
 
+    const counts = monthBuckets.map(bucket => {
+        return sessions.filter(s => {
+            const sd = new Date(s.sessionDate);
+
+            console.log(
+                "Checking:",
+                s.athleteName,
+                s.sessionDate,
+                "against",
+                athleteName
+            );
+
+            return s.athleteName === athleteName &&
+                sd.getFullYear() === bucket.year &&
+                sd.getMonth() === bucket.month;
+        }).length;
+    });
+}
         if (metric === 'attendance') {
-            const attendanceRecords = await Attendance.find({ 'records.athlete': athleteId });
+const attendanceRecords = await Attendance.find({});
+
+console.log("========== Attendance Records ==========");
+console.log(JSON.stringify(attendanceRecords, null, 2));
             const percentages = monthBuckets.map(bucket => {
                 const monthRecords = attendanceRecords.filter(a => {
                     const ad = new Date(a.date);
@@ -443,8 +497,43 @@ exports.getRealMetrics = async (req, res) => {
                 benchmark: 90,
             });
         }
+const records = await Performance.find({
+    athlete: athleteId,
+    metric: metric
+}).sort({ recordedDate: 1 });
 
-        return res.status(400).json({ message: 'Unknown metric. Use "attendance" or "sessions".' });
+console.log("========== Performance Records ==========");
+console.log(records);
+console.log("========================================");
+
+// Build one value per month
+const values = monthBuckets.map(bucket => {
+
+    const monthlyRecords = records.filter(r => {
+        const d = new Date(r.recordedDate);
+
+        return (
+            d.getFullYear() === bucket.year &&
+            d.getMonth() === bucket.month
+        );
+    });
+
+    if (monthlyRecords.length === 0) {
+        return 0;
+    }
+
+    // Use latest score of the month
+    return Number(monthlyRecords[monthlyRecords.length - 1].value);
+});
+
+return res.status(200).json({
+    labels: monthBuckets.map(b => b.label),
+    values,
+    metric,
+    benchmark: records.length
+        ? records[records.length - 1].benchmark
+        : null,
+});
     } catch (error) {
         console.error('getRealMetrics error:', error);
         res.status(500).json({ message: error.message });
