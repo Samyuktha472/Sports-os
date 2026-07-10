@@ -35,7 +35,8 @@ const importRoutes = require("./routes/importRoute");
 const rosterRoutes = require("./routes/rosterRoutes");
 const inviteRoutes = require("./routes/inviteRoutes");
 const matchRoutes = require("./routes/matchRoutes");
-
+const notificationRoutes = require("./routes/notificationRoutes");
+const batchChangeRequestRoutes = require("./routes/batchChangeRequestRoutes");
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/batches", batchRoutes);
@@ -49,14 +50,15 @@ app.use("/api/import", importRoutes);
 app.use("/api/roster", rosterRoutes);
 app.use("/api/invites", inviteRoutes);
 app.use("/api/matches", matchRoutes);
-
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/batch-change-requests", batchChangeRequestRoutes);
 // Default Route
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/pages/register.html"));
 });
 
 // Start Server
-const PORT = process.env.PORT || 5006;
+const PORT = process.env.PORT || 5005;
 
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
