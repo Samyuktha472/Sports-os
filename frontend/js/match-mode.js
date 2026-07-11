@@ -70,13 +70,24 @@ async function saveSession() {
         return;
     }
 
+
     if (!currentBatchId) {
         alert("No batch selected. Please ensure you are logged into a session.");
+
+    // Fallback if no batch ID is found (e.g. manual entry)
+    // In a real app, we'd probably want to select a batch from a dropdown if currentBatchId is null
+    if (!currentBatchId) {
+        alert("No batch selected. Please ensure you are logged into a session or select a batch.");
+
         return;
     }
 
     const body = {
+
         opponent: batchName || "Academy Session",
+
+        opponent: batchName || "Academy Session", // We use 'opponent' field for the batch/team name in the Match model
+
         format: title,
         sport: sport,
         batch: currentBatchId,
@@ -98,7 +109,7 @@ async function saveSession() {
         });
 
         if (res.ok) {
-            alert("Session Saved Successfully!");
+            alert("Planned Session Saved Successfully!");
             localStorage.setItem("dashboardUpdated", "true");
             window.location.href = "dashboard.html";
         } else {

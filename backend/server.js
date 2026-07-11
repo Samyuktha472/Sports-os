@@ -36,8 +36,12 @@ const rosterRoutes = require("./routes/rosterRoutes");
 const inviteRoutes = require("./routes/inviteRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const announcementRoutes = require("./routes/announcementRoutes");
+<<<<<<< HEAD
 const notificationRoutes = require("./routes/notificationRoutes");
 const batchChangeRequestRoutes = require("./routes/batchChangeRequestRoutes");
+=======
+
+>>>>>>> 8e77183 (Update dashboard and fix announcement functionality)
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/batches", batchRoutes);
@@ -52,8 +56,12 @@ app.use("/api/roster", rosterRoutes);
 app.use("/api/invites", inviteRoutes);
 app.use("/api/matches", matchRoutes);
 app.use("/api/announcements", announcementRoutes);
+<<<<<<< HEAD
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/batch-change-requests", batchChangeRequestRoutes);
+=======
+
+>>>>>>> 8e77183 (Update dashboard and fix announcement functionality)
 // Default Route
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/pages/register.html"));

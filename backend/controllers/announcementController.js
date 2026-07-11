@@ -8,10 +8,14 @@ exports.createAnnouncement = async (req, res) => {
             return res.status(400).json({ message: 'Title and message are required.' });
         }
 
+<<<<<<< HEAD
         const academyName = req.user.academyName;
         if (!academyName) {
             return res.status(400).json({ message: 'User academy name is required.' });
         }
+=======
+        const academyName = req.user.academyName || 'General';
+>>>>>>> 8e77183 (Update dashboard and fix announcement functionality)
 
         const announcement = new Announcement({
             title: title.trim(),
@@ -25,16 +29,27 @@ exports.createAnnouncement = async (req, res) => {
         res.status(201).json(announcement);
     } catch (err) {
         console.error('Error creating announcement:', err);
+<<<<<<< HEAD
         res.status(500).json({ message: err.message || 'Failed to create announcement' });
+=======
+        // Ensure we send JSON even on unexpected errors
+        res.status(500).json({ message: err.message || 'Failed to save announcement' });
+>>>>>>> 8e77183 (Update dashboard and fix announcement functionality)
     }
 };
 
 exports.getAnnouncements = async (req, res) => {
     try {
         const academyName = req.user.academyName;
+<<<<<<< HEAD
         if (!academyName) return res.json([]);
 
         const filters = { academyName };
+=======
+        // If academy name exists, filter by it. If not, show all (for demo/fallback)
+        const filters = academyName ? { academyName } : {};
+
+>>>>>>> 8e77183 (Update dashboard and fix announcement functionality)
         if (req.user.sport) {
             filters.sport = { $in: [req.user.sport.toLowerCase(), 'all'] };
         }
