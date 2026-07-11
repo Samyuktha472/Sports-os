@@ -14,5 +14,5 @@ router.get('/coaches', protect, mgr, rc.getCoaches);
 router.post('/coaches', protect, mgr, rc.createCoach);
 router.put('/coaches/:id', protect, mgr, rc.updateCoach);
 router.delete('/coaches/:id', protect, mgr, rc.deleteCoach);
-
+router.patch('/toggle-active/:id', protect, roleMiddleware(['owner']), rc.toggleUserActive);
 module.exports = router;

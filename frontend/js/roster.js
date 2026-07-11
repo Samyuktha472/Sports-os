@@ -40,7 +40,7 @@ function validatePhoneField(inputId, errorId) {
     if (!input || !errorEl) return true;
 
     const val = input.value.trim();
-    if (!val) { // optional field, empty is fine
+    if (!val) {
         input.classList.remove('invalid');
         errorEl.classList.remove('show');
         return true;
@@ -65,7 +65,7 @@ function validatePasswordField(inputId, errorId, required) {
     if (!val) {
         input.classList.remove('invalid');
         errorEl.classList.remove('show');
-        return !required; // if required and empty, invalid; else valid
+        return !required;
     }
     if (!passwordRegex.test(val)) {
         input.classList.add('invalid');
@@ -130,16 +130,19 @@ async function loadAthletes() {
 
 function renderAthletes() {
     const tbody = document.getElementById('athleteTableBody');
+    const role = getStoredUser()?.role;
+
     if (!athletes.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No athletes yet. Click + Add Athlete to get started.</td></tr>';
         return;
     }
     tbody.innerHTML = athletes.map(a => `
-        <tr data-id="${a._id}">
+        <tr data-id="${a._id}" style="${a.isActive === false ? 'opacity:0.6;' : ''}">
             <td>
                 <div class="avatar-cell">
                     <div class="avatar-sm">${initials(a.name)}</div>
                     <span>${a.name}</span>
+                    ${a.isActive === false ? '<span style="background:#FEE2E2;color:#DC2626;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:6px;">Inactive</span>' : ''}
                 </div>
             </td>
             <td>${a.email}</td>
@@ -150,6 +153,12 @@ function renderAthletes() {
                 <div class="action-btns">
                     <button class="btn-icon" onclick="openEditAthlete('${a._id}')">✏️ Edit</button>
                     <button class="btn-icon danger" onclick="deleteAthlete('${a._id}', '${a.name}')">🗑️</button>
+                    ${role === 'owner' ? `
+                    <button class="btn-icon" 
+                        style="background:${a.isActive === false ? '#DCFCE7;color:#16A34A' : '#FEE2E2;color:#DC2626'};"
+                        onclick="toggleUserActive('${a._id}', ${a.isActive !== false})">
+                        ${a.isActive === false ? '✅ Enable Login' : '🔴 Disable Login'}
+                    </button>` : ''}
                 </div>
             </td>
         </tr>
@@ -208,10 +217,7 @@ async function saveAthlete() {
     if (!body.name || !body.email) { showToast('Name and email are required', 'error'); return; }
     if (!editAthleteId && !pw) { showToast('Password is required for new athletes', 'error'); return; }
 
-    // Phone validation
     if (!validatePhoneField('a_phone', 'a_phone_error')) { return; }
-
-    // Password validation
     if (!validatePasswordField('a_password', 'a_password_error', false)) { return; }
 
     btn.disabled = true;
@@ -273,11 +279,12 @@ function renderCoaches() {
         return;
     }
     tbody.innerHTML = coaches.map(c => `
-        <tr data-id="${c._id}">
+        <tr data-id="${c._id}" style="${c.isActive === false ? 'opacity:0.6;' : ''}">
             <td>
                 <div class="avatar-cell">
                     <div class="avatar-sm">${initials(c.name)}</div>
                     <span>${c.name}</span>
+                    ${c.isActive === false ? '<span style="background:#FEE2E2;color:#DC2626;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:6px;">Inactive</span>' : ''}
                 </div>
             </td>
             <td>${c.email}</td>
@@ -289,6 +296,12 @@ function renderCoaches() {
                 <div class="action-btns">
                     <button class="btn-icon" onclick="openEditCoach('${c._id}')">✏️ Edit</button>
                     <button class="btn-icon danger" onclick="deleteCoach('${c._id}', '${c.name}')">🗑️</button>
+                    ${role === 'owner' ? `
+                    <button class="btn-icon"
+                        style="background:${c.isActive === false ? '#DCFCE7;color:#16A34A' : '#FEE2E2;color:#DC2626'};"
+                        onclick="toggleUserActive('${c._id}', ${c.isActive !== false})">
+                        ${c.isActive === false ? '✅ Enable Login' : '🔴 Disable Login'}
+                    </button>` : ''}
                 </div>` : ''}
             </td>
         </tr>
@@ -345,10 +358,7 @@ async function saveCoach() {
     if (!body.name || !body.email) { showToast('Name and email are required', 'error'); return; }
     if (!editCoachId && !pw) { showToast('Password is required for new coaches', 'error'); return; }
 
-    // Phone validation
     if (!validatePhoneField('c_phone', 'c_phone_error')) { return; }
-
-    // Password validation
     if (!validatePasswordField('c_password', 'c_password_error', false)) { return; }
 
     btn.disabled = true;
@@ -513,6 +523,7 @@ function renderExistingBatches() {
         </tr>
     `).join('');
 }
+
 function openEditBatch(id) {
     const b = existingBatches.find(x => x._id === id);
     if (!b) return;
@@ -527,13 +538,11 @@ function openEditBatch(id) {
         document.getElementById('b_headCoach').value = b.coachId?._id || b.coachId || '';
     }
 
-    // Check the coaches that are already in this batch
     document.querySelectorAll('.b-coach-checkbox').forEach(cb => {
         const batchCoachIds = (b.coaches || []).map(c => c._id || c);
         cb.checked = batchCoachIds.includes(cb.value);
     });
 
-    // Check the athletes that are already in this batch
     document.querySelectorAll('.b-athlete-checkbox').forEach(cb => {
         const batchAthleteIds = (b.athletes || []).map(a => a._id || a);
         cb.checked = batchAthleteIds.includes(cb.value);
@@ -542,7 +551,6 @@ function openEditBatch(id) {
     document.getElementById('batchSaveBtn').textContent = 'Update Batch';
     document.getElementById('batchCancelEditBtn').style.display = 'inline-block';
 
-    // Scroll up to the form so the user sees it
     document.querySelector('.batch-form-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -596,6 +604,7 @@ async function saveBatch() {
         btn.disabled = false;
     }
 }
+
 async function deleteBatch(id, name) {
     if (!confirm(`Delete batch "${name}"? This cannot be undone.`)) return;
     try {
@@ -610,8 +619,10 @@ async function deleteBatch(id, name) {
         showToast('Network error', 'error');
     }
 }
+
 document.getElementById('batchSaveBtn')?.addEventListener('click', saveBatch);
 document.getElementById('batchCancelEditBtn')?.addEventListener('click', cancelEditBatch);
+
 // Hide "Add Coach" button for plain coaches (only owner/head_coach can add)
 (function () {
     const role = getStoredUser()?.role;
@@ -619,6 +630,30 @@ document.getElementById('batchCancelEditBtn')?.addEventListener('click', cancelE
         document.getElementById('addCoachBtn')?.style.setProperty('display', 'none');
     }
 })();
+
+// ── Toggle User Active/Inactive (Owner only) ──────────────────────────────────
+async function toggleUserActive(userId, currentlyActive) {
+    const action = currentlyActive ? 'disable' : 'enable';
+    if (!confirm(`Are you sure you want to ${action} this user's login?`)) return;
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/roster/toggle-active/${userId}`, {
+            method: 'PATCH',
+            headers: authHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.message || 'Failed to update', 'error');
+            return;
+        }
+        showToast(data.message);
+        loadAthletes();
+        loadCoaches();
+    } catch {
+        showToast('Network error', 'error');
+    }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 loadAthletes();
 loadCoaches();

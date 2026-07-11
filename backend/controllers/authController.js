@@ -133,6 +133,11 @@ exports.login = async (req, res) => {
                 message: 'Invalid email/mobile or password.'
             });
         }
+        if (!user.isActive) {
+            return res.status(403).json({
+                message: 'Your account has been deactivated. Please contact your academy owner.'
+            });
+        }
 
         if (req.body.role && req.body.role !== user.role) {
             return res.status(401).json({

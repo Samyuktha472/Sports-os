@@ -179,3 +179,29 @@ exports.deleteCoach = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+exports.toggleUserActive = async (req, res) => {
+    try {
+        const user = await User.findOne({
+            _id: req.params.id,
+            academyName: req.user.academyName
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        if (user.role === 'owner') {
+            return res.status(403).json({ message: 'Cannot deactivate an owner account.' });
+        }
+
+        user.isActive = !user.isActive;
+        await user.save();
+
+        res.status(200).json({
+            message: user.isActive ? 'User account activated successfully.' : 'User account deactivated successfully.',
+            isActive: user.isActive
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
