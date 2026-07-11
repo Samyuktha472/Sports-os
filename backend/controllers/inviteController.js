@@ -132,7 +132,23 @@ exports.acceptInvite = async (req, res) => {
                 message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'
             });
         }
+        const normalizedPhone = phone?.trim();
 
+if (!normalizedPhone || !/^\d{10}$/.test(normalizedPhone)) {
+    return res.status(400).json({
+        message: "Phone number must contain exactly 10 digits."
+    });
+}
+
+const existingPhone = await User.findOne({
+    phone: normalizedPhone
+});
+
+if (existingPhone) {
+    return res.status(400).json({
+        message: "This phone number is already registered."
+    });
+}
         const user = await User.create({
             name,
             email: invite.email,
@@ -140,7 +156,7 @@ exports.acceptInvite = async (req, res) => {
             role: invite.role,
             academyName: invite.academyName,
             sport: invite.sport,
-            phone: phone || '',
+            phone: phone.trim(),
             specialization: specialization || '',
             dob: dob || '',
             bloodGroup: bloodGroup || '',
@@ -167,6 +183,14 @@ exports.acceptInvite = async (req, res) => {
             }
         });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+    if (err.code === 11000) {
+        return res.status(400).json({
+            message: "Email or phone number already exists."
+        });
     }
+
+    res.status(500).json({
+        message: err.message
+    });
+}
 };

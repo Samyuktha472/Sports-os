@@ -14,7 +14,7 @@ const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // hit this endpoint, so this can't be used to forge a role.
 exports.register = async (req, res) => {
     try {
-        const { name, email, password, academyName, sports } = req.body;
+        const { name, email, phone, password, academyName, sports } = req.body;
 
         if (!name || !email || !password || !academyName) {
             return res.status(400).json({ message: 'name, email, password, and academyName are required.' });
@@ -46,7 +46,13 @@ exports.register = async (req, res) => {
         if (existingEmail) {
             return res.status(400).json({ message: 'A user with this email already exists.' });
         }
+        const existingPhone = await User.findOne({ phone: phone.trim() });
 
+if (existingPhone) {
+    return res.status(400).json({
+        message: "This phone number is already registered."
+    });
+}
         // One academy name = one tenant. Block near-duplicates (case-insensitive) so two
         // owners can never end up sharing — and seeing — each other's data.
         const existingAcademy = await User.findOne({
@@ -63,6 +69,7 @@ const finalSports = validatedSports.length > 0 ? validatedSports : ['cricket'];
         const user = await User.create({
             name: trimmedName,
             email: normalizedEmail,
+            phone,
             password,
             role: 'owner',
             academyName: trimmedAcademyName,
@@ -92,30 +99,56 @@ sports: finalSports, // keep single 'sport' field for backward compatibility wit
 // POST /api/auth/login
 exports.login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { identifier, password } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({ message: 'email and password are required.' });
+        if (!identifier || !password) {
+            return res.status(400).json({
+                message: 'Email/Mobile and password are required.'
+            });
         }
 
-        const user = await User.findOne({ email: email.trim().toLowerCase() });
+        // Check whether user entered email or mobile number
+        let user;
+
+        if (identifier.includes("@")) {
+            user = await User.findOne({
+                email: identifier.trim().toLowerCase()
+            });
+        } else {
+            user = await User.findOne({
+                phone: identifier.trim()
+            });
+        }
+
         if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password.' });
+            return res.status(401).json({
+                message: 'Invalid email/mobile or password.'
+            });
         }
 
         const match = await user.comparePassword(password);
+
         if (!match) {
-            return res.status(401).json({ message: 'Invalid email or password.' });
+            return res.status(401).json({
+                message: 'Invalid email/mobile or password.'
+            });
         }
 
         if (req.body.role && req.body.role !== user.role) {
-            return res.status(401).json({ message: 'Incorrect role selected for this account.' });
+            return res.status(401).json({
+                message: 'Incorrect role selected for this account.'
+            });
         }
 
         let sport = user.sport || '';
         let sports = user.sports || [];
+
         if (user.role !== 'owner') {
-            const owner = await User.findOne({ role: 'owner', academyName: user.academyName });
+            const owner = await User.findOne({
+                role: 'owner',
+                academyName: user.academyName
+            });
+
             if (owner) {
                 sport = owner.sport || '';
                 sports = owner.sports || [];
@@ -128,6 +161,7 @@ exports.login = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
+                phone: user.phone,
                 role: user.role,
                 sport,
                 sports,
@@ -138,8 +172,11 @@ exports.login = async (req, res) => {
                 profilePicture: user.profilePicture,
             }
         });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+            message: error.message
+        });
     }
 };
 

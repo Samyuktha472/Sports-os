@@ -100,11 +100,11 @@
                         <div class="field-error" id="emailError">Enter a valid email address (e.g. name@example.com).</div>
                     </div>
                     <div class="form-group">
-    <label for="mobile">Mobile Number</label>
+    <label for="phone">Mobile Number</label>
 <input
     type="tel"
-    id="mobile"
-    name="mobile"
+    id="phone"
+    name="phone"
     class="form-control"
     placeholder="Enter 10-digit mobile number"
     maxlength="10"
@@ -112,7 +112,7 @@
     required
     oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
 
-<div class="field-error" id="mobileError">
+<div class="field-error" id="phoneError">
     Mobile number must contain exactly 10 digits.
 </div>
 </div>
@@ -231,7 +231,7 @@ function selectSport(sport) {
             const academyName = document.getElementById('academyName').value.trim();
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
-            const mobile = document.getElementById('mobile').value.trim();
+            const phone = document.getElementById('phone').value.trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
@@ -270,11 +270,11 @@ function selectSport(sport) {
             } else {
                 setFieldError('confirmPassword', 'confirmPasswordError', false);
             }
-     if (!/^\d{10}$/.test(mobile)) {
-    setFieldError('mobile', 'mobileError', true);
+     if (!/^\d{10}$/.test(phone)) {
+    setFieldError('phone', 'phoneError', true);
     valid = false;
 } else {
-    setFieldError('mobile', 'mobileError', false);
+    setFieldError('phone', 'phoneError', false);
 }
 
             if (!valid) return;
@@ -286,7 +286,7 @@ function selectSport(sport) {
                     body: JSON.stringify({
     name,
     email,
-    mobile,
+    phone,
     password,
     academyName,
     sports: selectedSports,

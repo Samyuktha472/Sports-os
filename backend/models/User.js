@@ -47,8 +47,10 @@ const userSchema = new mongoose.Schema(
             default: '',
         },
         phone: {
-            type: String,
-            default: '',
+             type: String,
+              required: true,
+              unique: true,
+              trim: true,
         },
         bloodGroup: {
             type: String,
