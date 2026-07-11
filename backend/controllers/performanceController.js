@@ -44,15 +44,14 @@ exports.getPerformanceData = async (req, res) => {
 
         const performance = await Performance.find(filters).sort({ recordedDate: 1 });
 
-        if (!performance.length) {
-            const fallback = mockData[metric] || Object.values(mockData)[0];
-            return res.status(200).json({
-                records: fallback.records,
-                benchmark: fallback.benchmark,
-                athlete: fallback.athlete,
-                metric: fallback.metric,
-            });
-        }
+       if (!performance.length) {
+    return res.status(200).json({
+        records: [],
+        benchmark: 0,
+        athlete: athleteId || "Athlete",
+        metric: metric || ""
+    });
+}
 
         res.status(200).json({
             records: performance.map(record => ({
