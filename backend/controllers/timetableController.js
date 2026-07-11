@@ -6,16 +6,19 @@ exports.getTimetable = async (req, res) => {
         const user = req.user;
         let filter = {};
 
+        // Always try to filter by academy if available
+        if (user.academyName) {
+            filter.academyName = user.academyName;
+        }
+
         if (user.role === 'coach') {
-            const myBatches = await Batch.find({ coachId: user._id, sport: user.sport, academyName: user.academyName }).select('_id');
-            filter = { batch: { $in: myBatches.map(b => b._id) } };
+            const myBatches = await Batch.find({ coachId: user._id, academyName: user.academyName }).select('_id');
+            if (myBatches.length > 0) {
+                filter.batch = { $in: myBatches.map(b => b._id) };
+            }
         } else if (user.role === 'athlete') {
-            const myBatch = await Batch.findOne({ athletes: user._id, sport: user.sport, academyName: user.academyName }).select('_id');
-            filter = myBatch ? { batch: myBatch._id } : { _id: null };
-        } else {
-            // owner / head_coach — scope by sport via batch
-            const sportBatches = await Batch.find({ sport: user.sport, academyName: user.academyName }).select('_id');
-            filter = { batch: { $in: sportBatches.map(b => b._id) } };
+            const myBatch = await Batch.findOne({ athletes: user._id, academyName: user.academyName }).select('_id');
+            filter.batch = myBatch ? myBatch._id : { _id: null };
         }
 
         const slots = await Timetable.find(filter)
@@ -33,10 +36,6 @@ exports.getTimetable = async (req, res) => {
 exports.createEntry = async (req, res) => {
     try {
         const { batch, coach, dayOfWeek, startTime, endTime, activityType, location, notes } = req.body;
-
-        // verify batch belongs to user's sport
-        const batchDoc = await Batch.findOne({ _id: batch, sport: req.user.sport, academyName: req.user.academyName });
-        if (!batchDoc) return res.status(403).json({ message: 'Batch not found or belongs to a different sport.' });
 
         const slot = new Timetable({
             batch, coach, dayOfWeek, startTime, endTime,
