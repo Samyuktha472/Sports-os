@@ -28,8 +28,8 @@ const NAV_ITEMS = [
         roles: ['owner', 'head_coach', 'coach', 'athlete']
     },
     {
-        label: 'My Profile', icon: '👤', href: 'my-profile.html',
-        roles: ['athlete']
+       label: 'My Profile', icon: '👤', href: 'my-profile.html',
+roles: ['athlete', 'coach', 'head_coach', 'owner']
     },
     {
         label: 'Resource Management', icon: '🎒', href: 'resources.html',

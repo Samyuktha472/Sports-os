@@ -667,10 +667,20 @@
             document.getElementById('editEmergencyContact').value = user.emergencyContact || '';
 
             loadCoachName(user);
-            if (user.role === 'athlete') {
-                loadPerformanceSummary(user);
-                setupBatchChangeUI(user);
-            }
+          if (user.role === 'athlete') {
+    loadPerformanceSummary(user);
+    setupBatchChangeUI(user);
+}
+
+// Hide athlete-only sections for other roles
+if (user.role !== 'athlete') {
+    const batchSection = document.getElementById('batchChangeActionWrap');
+    const batchStatus = document.getElementById('batchChangeStatusRow');
+    const perfSection = document.getElementById('perfSummary');
+    if (batchSection) batchSection.style.display = 'none';
+    if (batchStatus) batchStatus.style.display = 'none';
+    if (perfSection) perfSection.style.display = 'none';
+}
         }
 
         // ─── Sport-specific primary metrics shown on the profile ─────────────────────
