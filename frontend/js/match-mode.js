@@ -1,11 +1,14 @@
 const API_BASE_URL = `${window.location.origin}/api`;
 
-function getToken() {
-    const user = JSON.parse(localStorage.getItem("user"));
-    return user?.token || localStorage.getItem("token");
+if (typeof getToken !== 'function') {
+    window.getToken = function() {
+        const user = JSON.parse(localStorage.getItem('user'));
+        return user?.token || localStorage.getItem('token');
+    };
 }
 
 const token = getToken();
+let currentBatchId = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     loadTodaySession();
@@ -30,7 +33,7 @@ async function loadTodaySession() {
         const slot = slots.find(s => s.dayOfWeek === today);
 
         if (slot) {
-            // Fill inputs with timetable data
+            currentBatchId = slot.batch?._id;
             if (document.getElementById("activityName")) document.getElementById("activityName").value = slot.activityType || "";
             if (document.getElementById("batch")) document.getElementById("batch").value = slot.batch?.name || "";
             if (document.getElementById("coach")) document.getElementById("coach").value = slot.coach?.name || "";
@@ -51,20 +54,38 @@ async function loadTodaySession() {
 }
 
 async function saveSession() {
-    // Collect data using correct field names for the Match model
-    const body = {
-        title: document.getElementById("activityName").value,
-        opponent: document.getElementById("batch").value, // Using batch as opponent/team name
-        date: document.getElementById("matchDate").value,
-        time: `${document.getElementById("startTime").value} - ${document.getElementById("endTime").value}`,
-        venue: document.getElementById("sessionLocation").value,
-        notes: document.getElementById("coachNotes").value
-    };
+    const user = JSON.parse(localStorage.getItem('user'));
+    const sport = user?.sport || 'cricket';
 
-    if (!body.title) {
+    const title = document.getElementById("activityName").value.trim();
+    const batchName = document.getElementById("batch").value.trim();
+    const startTime = document.getElementById("startTime").value;
+    const endTime = document.getElementById("endTime").value;
+    const date = document.getElementById("matchDate").value;
+    const venue = document.getElementById("sessionLocation").value.trim();
+    const notes = document.getElementById("coachNotes").value.trim();
+
+    if (!title) {
         alert("Please enter an activity name.");
         return;
     }
+
+    if (!currentBatchId) {
+        alert("No batch selected. Please ensure you are logged into a session.");
+        return;
+    }
+
+    const body = {
+        opponent: batchName || "Academy Session",
+        format: title,
+        sport: sport,
+        batch: currentBatchId,
+        matchDate: date,
+        startTime: startTime,
+        endTime: endTime,
+        location: venue,
+        notes: notes
+    };
 
     try {
         const res = await fetch(`${API_BASE_URL}/matches`, {

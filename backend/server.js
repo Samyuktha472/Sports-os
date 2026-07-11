@@ -35,6 +35,7 @@ const importRoutes = require("./routes/importRoute");
 const rosterRoutes = require("./routes/rosterRoutes");
 const inviteRoutes = require("./routes/inviteRoutes");
 const matchRoutes = require("./routes/matchRoutes");
+const announcementRoutes = require("./routes/announcementRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const batchChangeRequestRoutes = require("./routes/batchChangeRequestRoutes");
 // API Routes
@@ -50,6 +51,7 @@ app.use("/api/import", importRoutes);
 app.use("/api/roster", rosterRoutes);
 app.use("/api/invites", inviteRoutes);
 app.use("/api/matches", matchRoutes);
+app.use("/api/announcements", announcementRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/batch-change-requests", batchChangeRequestRoutes);
 // Default Route
