@@ -147,8 +147,12 @@
                         <h3>Invite a teammate</h3>
                     </div>
                     <div class="form-group">
-                        <label for="inviteEmail">Email</label>
+                        <label for="inviteEmail">Email (or mobile number below)</label>
                         <input type="email" id="inviteEmail" class="form-control" placeholder="teammate@example.com" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="inviteMobile">Mobile Number (or email above)</label>
+                        <input type="tel" id="inviteMobile" class="form-control" placeholder="10-digit mobile number" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
                     </div>
                     <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
                         <div>

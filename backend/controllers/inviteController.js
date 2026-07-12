@@ -7,16 +7,35 @@ const { EMAIL_REGEX, NAME_REGEX, STRONG_PASSWORD_REGEX } = require('../utils/val
 exports.createInvite = async (req, res) => {
     try {
         const inviter = req.user;
-        const { email, role } = req.body;
+        const { email, phone, role } = req.body;
+        if ((!email && !phone) || !role) {
+    return res.status(400).json({
+        message: "Email or phone number is required."
+    });
+}
 
-        if (!email || !role) {
-            return res.status(400).json({ message: 'Email and role are required.' });
-        }
+        let normalizedEmail = "";
 
-        const normalizedEmail = email.trim().toLowerCase();
-        if (!EMAIL_REGEX.test(normalizedEmail)) {
-            return res.status(400).json({ message: 'Enter a valid email address.' });
-        }
+if (email) {
+    normalizedEmail = email.trim().toLowerCase();
+
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+        return res.status(400).json({
+            message: "Enter a valid email address."
+        });
+    }
+}
+      let normalizedPhone = "";
+
+if (phone) {
+    normalizedPhone = phone.trim();
+
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+        return res.status(400).json({
+            message: "Phone number must contain exactly 10 digits."
+        });
+    }
+}
 
         // Role permission check
         const allowed = {
@@ -29,19 +48,38 @@ exports.createInvite = async (req, res) => {
         }
 
         // Check if user already exists
-        const existing = await User.findOne({ email: normalizedEmail });
-        if (existing) {
-            return res.status(400).json({ message: 'A user with this email already exists.' });
-        }
+        const existing = await User.findOne({
+    $or: [
+        ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
+        ...(normalizedPhone ? [{ phone: normalizedPhone }] : [])
+    ]
+});
 
-        // Check if active invite already exists for this email
+if (existing) {
+    if (normalizedEmail && existing.email === normalizedEmail) {
+        return res.status(400).json({
+            message: "A user with this email already exists."
+        });
+    }
+
+    if (normalizedPhone && existing.phone === normalizedPhone) {
+        return res.status(400).json({
+            message: "A user with this phone number already exists."
+        });
+    }
+}
+
+        // Check if active invite already exists for this email/phone
         const existingInvite = await Invite.findOne({
-            email: normalizedEmail,
+            $or: [
+                ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
+                ...(normalizedPhone ? [{ phone: normalizedPhone }] : []),
+            ],
             used: false,
             expiresAt: { $gt: new Date() },
         });
         if (existingInvite) {
-            return res.status(400).json({ message: 'An active invite already exists for this email.' });
+            return res.status(400).json({ message: 'An active invite already exists for this email or phone number.' });
         }
 
         const selectedSport = req.body.sport;
@@ -63,7 +101,8 @@ if (
 }
 
 const invite = await Invite.create({
-    email,
+    email: normalizedEmail,
+    phone: normalizedPhone,
     role,
     academyName: inviter.academyName,
     sport: selectedSport,
@@ -94,6 +133,7 @@ exports.getInvite = async (req, res) => {
 
         res.json({
             email: invite.email,
+            phone: invite.phone,
             role: invite.role,
             academyName: invite.academyName,
             sport: invite.sport,
@@ -107,7 +147,7 @@ exports.getInvite = async (req, res) => {
 // Public — complete registration via invite
 exports.acceptInvite = async (req, res) => {
     try {
-        const { token, password, name, phone, specialization, dob, bloodGroup, emergencyContact, batchAssigned } = req.body;
+        const { token, password, name, email, phone, specialization, dob, bloodGroup, emergencyContact, batchAssigned } = req.body;
 
         const invite = await Invite.findOne({
             token,
@@ -123,40 +163,55 @@ exports.acceptInvite = async (req, res) => {
             return res.status(400).json({ message: 'Name must start with a letter and contain only letters, spaces, hyphens or apostrophes.' });
         }
 
-        if (!EMAIL_REGEX.test(invite.email)) {
-            return res.status(400).json({ message: 'Invite email is invalid.' });
-        }
-
         if (!STRONG_PASSWORD_REGEX.test(password)) {
             return res.status(400).json({
                 message: 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'
             });
         }
-        const normalizedPhone = phone?.trim();
 
-if (!normalizedPhone || !/^\d{10}$/.test(normalizedPhone)) {
-    return res.status(400).json({
-        message: "Phone number must contain exactly 10 digits."
-    });
-}
+        // Use the email captured at invite time if there is one; otherwise the invite
+        // was created with phone only, so collect and validate it here.
+        let normalizedEmail = invite.email ? invite.email.trim().toLowerCase() : '';
+        if (!normalizedEmail) {
+            normalizedEmail = email ? email.trim().toLowerCase() : '';
+            if (!normalizedEmail || !EMAIL_REGEX.test(normalizedEmail)) {
+                return res.status(400).json({ message: 'Enter a valid email address.' });
+            }
+        }
 
-const existingPhone = await User.findOne({
-    phone: normalizedPhone
-});
+        // Same idea for phone: only ask for it here if the invite didn't already have one.
+        let normalizedPhone = invite.phone ? invite.phone.trim() : '';
+        if (!normalizedPhone) {
+            normalizedPhone = phone ? phone.trim() : '';
+            if (!normalizedPhone || !/^\d{10}$/.test(normalizedPhone)) {
+                return res.status(400).json({ message: 'Phone number must contain exactly 10 digits.' });
+            }
+        }
 
-if (existingPhone) {
-    return res.status(400).json({
-        message: "This phone number is already registered."
-    });
-}
+        const existing = await User.findOne({
+            $or: [
+                ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
+                ...(normalizedPhone ? [{ phone: normalizedPhone }] : []),
+            ],
+        });
+
+        if (existing) {
+            if (normalizedEmail && existing.email === normalizedEmail) {
+                return res.status(400).json({ message: 'This email is already registered.' });
+            }
+            if (normalizedPhone && existing.phone === normalizedPhone) {
+                return res.status(400).json({ message: 'This phone number is already registered.' });
+            }
+        }
+
         const user = await User.create({
             name,
-            email: invite.email,
+            email: normalizedEmail,
             password,
             role: invite.role,
             academyName: invite.academyName,
             sport: invite.sport,
-            phone: phone.trim(),
+            phone: normalizedPhone,
             specialization: specialization || '',
             dob: dob || '',
             bloodGroup: bloodGroup || '',

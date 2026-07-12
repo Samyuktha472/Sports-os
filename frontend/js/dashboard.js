@@ -23,6 +23,7 @@ const INVITE_PERMISSIONS = {
 };
 
 const inviteEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const inviteMobileRegex = /^[0-9]{10}$/;
 
 function renderInviteSection() {
     const user = getStoredUser();
@@ -60,11 +61,24 @@ async function handleInviteCreate() {
     if (copyBtn) copyBtn.style.display = 'none';
 
     const email = document.getElementById('inviteEmail')?.value.trim();
+    const phone = document.getElementById('inviteMobile')?.value.trim();
     const role = document.getElementById('inviteRole')?.value;
     const sport = document.getElementById('inviteSport')?.value;
 
-    if (!email || !inviteEmailRegex.test(email)) {
+    if (!email && !phone) {
+        feedbackEl.textContent = 'Enter an email address or a mobile number.';
+        feedbackEl.style.color = '#EF4444';
+        return;
+    }
+
+    if (email && !inviteEmailRegex.test(email)) {
         feedbackEl.textContent = 'Enter a valid email address.';
+        feedbackEl.style.color = '#EF4444';
+        return;
+    }
+
+    if (phone && !inviteMobileRegex.test(phone)) {
+        feedbackEl.textContent = 'Enter a valid 10-digit mobile number.';
         feedbackEl.style.color = '#EF4444';
         return;
     }
@@ -73,7 +87,7 @@ async function handleInviteCreate() {
         const res = await fetch(`${API_BASE_URL}/invites/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-            body: JSON.stringify({ email, role, sport }),
+            body: JSON.stringify({ email, phone, role, sport }),
         });
 
         const data = await res.json();

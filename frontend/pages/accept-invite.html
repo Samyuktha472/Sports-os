@@ -115,7 +115,7 @@
                 <form id="inviteForm" novalidate>
                     <div class="form-group">
                         <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" class="form-control" readonly>
+                        <input type="email" id="email" name="email" class="form-control">
                     </div>
 
                     <div class="invite-details">
@@ -262,7 +262,22 @@
                 }
 
                 const invite = await res.json();
-                document.getElementById('email').value = invite.email;
+                const emailInput = document.getElementById('email');
+                if (invite.email) {
+                    emailInput.value = invite.email;
+                    emailInput.readOnly = true;
+                } else {
+                    emailInput.value = '';
+                    emailInput.readOnly = false;
+                }
+                const phoneInput = document.getElementById('phone');
+                if (invite.phone) {
+                    phoneInput.value = invite.phone;
+                    phoneInput.readOnly = true;
+                } else {
+                    phoneInput.value = '';
+                    phoneInput.readOnly = false;
+                }
                 document.getElementById('inviteRole').textContent = invite.role.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
                 document.getElementById('inviteAcademy').textContent = invite.academyName;
                 document.getElementById('inviteSport').textContent = invite.sport.charAt(0).toUpperCase() + invite.sport.slice(1);
@@ -299,6 +314,7 @@
             errorMessage.textContent = '';
 
             const token = new URLSearchParams(window.location.search).get('token');
+            const email = document.getElementById('email').value.trim();
             const name = document.getElementById('name').value.trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
@@ -339,6 +355,7 @@
                         token,
                         name,
                         password,
+                        email,
                         phone,
                         specialization,
                         dob,

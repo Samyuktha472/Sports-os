@@ -4,10 +4,15 @@ const crypto = require('crypto');
 const inviteSchema = new mongoose.Schema({
     email: {
         type: String,
-        required: true,
         lowercase: true,
         trim: true,
+        default: "",
     },
+    phone: {
+    type: String,
+    trim: true,
+    default: ""
+},
     role: {
         type: String,
         enum: ['head_coach', 'coach', 'athlete'],
