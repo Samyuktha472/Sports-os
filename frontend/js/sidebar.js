@@ -21,15 +21,15 @@ const NAV_ITEMS = [
     },
     {
         label: 'Session & Voice Logging', icon: '🎙️', href: 'sessions.html',
-        roles: ['head_coach', 'coach']
+        roles: ['head_coach']
     },
     {
         label: 'Performance & Benchmarks', icon: '📈', href: 'performance.html',
         roles: ['owner', 'head_coach', 'coach', 'athlete']
     },
     {
-       label: 'My Profile', icon: '👤', href: 'my-profile.html',
-roles: ['athlete', 'coach', 'head_coach', 'owner']
+        label: 'My Profile', icon: '👤', href: 'my-profile.html',
+        roles: ['athlete', 'coach', 'head_coach', 'owner']
     },
     {
         label: 'Resource Management', icon: '🎒', href: 'resources.html',

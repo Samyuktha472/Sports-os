@@ -316,10 +316,10 @@ function beginRecording() {
 
     const user = getStoredUser();
 
-if (user?.role !== 'head_coach') {
-    showToast('Only Head Coach can record voice notes.', 'error');
-    return;
-}
+    if (user?.role !== 'head_coach') {
+        showToast('Only Head Coach can record voice notes.', 'error');
+        return;
+    }
 
     const recordBtn = document.getElementById('voiceRecordBtn');
     recordBtn.classList.add('recording');
@@ -372,10 +372,10 @@ if (user?.role !== 'head_coach') {
 function cancelRecording() {
     const user = getStoredUser();
 
-if (user?.role !== 'head_coach') {
-    showToast('Only Head Coach can delete voice notes.', 'error');
-    return;
-}
+    if (user?.role !== 'head_coach') {
+        showToast('Only Head Coach can delete voice notes.', 'error');
+        return;
+    }
     if (ATTACHMENTS.audioUrl) {
         URL.revokeObjectURL(ATTACHMENTS.audioUrl);
         ATTACHMENTS.audioUrl = null;
@@ -448,11 +448,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!token) { redirectToLogin(); return; }
 
     const user = getStoredUser();
-    if (user?.role === 'athlete') {
+
+    // athlete + coach (non-head-coach) ఇద్దరినీ block చేయండి
+    if (user?.role === 'athlete' || user?.role === 'coach') {
         alert('You do not have access to this page.');
         window.location.href = 'dashboard.html';
         return;
     }
+
+    // ... rest of the existing init code అలాగే ఉంచండి
 
     document.getElementById('pageDate').textContent = formatHeaderDate();
     document.getElementById('sessionDate').value = getTodayDate();
@@ -466,32 +470,32 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('sessionAthlete').addEventListener('change', updateRecordingBanner);
 
     const recordBtn = document.getElementById('voiceRecordBtn');
-const deleteBtn = document.getElementById('deleteVoiceBtn');
-const playback = document.getElementById('voicePlayback');
+    const deleteBtn = document.getElementById('deleteVoiceBtn');
+    const playback = document.getElementById('voicePlayback');
 
-const role = user?.role;
+    const role = user?.role;
 
-if (role === 'head_coach') {
+    if (role === 'head_coach') {
 
-    recordBtn.style.display = 'inline-flex';
-    deleteBtn.style.display = 'inline-flex';
-    playback.style.display = 'block';
+        recordBtn.style.display = 'inline-flex';
+        deleteBtn.style.display = 'inline-flex';
+        playback.style.display = 'block';
 
-    recordBtn.addEventListener('mousedown', beginRecording);
+        recordBtn.addEventListener('mousedown', beginRecording);
 
-} else if (role === 'coach' || role === 'athlete') {
+    } else if (role === 'coach' || role === 'athlete') {
 
-    recordBtn.style.display = 'none';
-    deleteBtn.style.display = 'none';
-    playback.style.display = 'block';
+        recordBtn.style.display = 'none';
+        deleteBtn.style.display = 'none';
+        playback.style.display = 'block';
 
-} else {
+    } else {
 
-    // owner
-    recordBtn.style.display = 'none';
-    deleteBtn.style.display = 'none';
-    playback.style.display = 'none';
-}
+        // owner
+        recordBtn.style.display = 'none';
+        deleteBtn.style.display = 'none';
+        playback.style.display = 'none';
+    }
 
     document.getElementById('deleteVoiceBtn')?.addEventListener('click', cancelRecording);
     document.getElementById('saveSessionBtn')?.addEventListener('click', saveSession);

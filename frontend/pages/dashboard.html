@@ -18,21 +18,29 @@
             gap: 24px;
             margin-bottom: 24px;
         }
+
         @media (max-width: 1100px) {
             .dashboard-grid-2 {
                 grid-template-columns: 1fr;
             }
         }
+
         /* Remove gradients from KPI cards as requested */
-        .dashboard-card.blue, .dashboard-card.green, .dashboard-card.orange, .dashboard-card.purple {
+        .dashboard-card.blue,
+        .dashboard-card.green,
+        .dashboard-card.orange,
+        .dashboard-card.purple {
             background: var(--color-white) !important;
             color: var(--color-dark) !important;
             border: 1px solid #E5E7EB;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        .dashboard-card h4, .dashboard-card p {
+
+        .dashboard-card h4,
+        .dashboard-card p {
             color: var(--color-muted) !important;
         }
+
         .dashboard-card h2 {
             color: var(--color-dark) !important;
         }
@@ -71,7 +79,8 @@
                 <div style="font-size:32px;">🔥</div>
                 <div>
                     <h3 id="streakValue" style="margin:0 0 4px;">0 days</h3>
-                    <p style="margin:0; font-size:13px; color:var(--color-muted);">Log in daily to build your streak.</p>
+                    <p style="margin:0; font-size:13px; color:var(--color-muted);">Log in daily to build your streak.
+                    </p>
                 </div>
             </div>
         </div>
@@ -89,7 +98,8 @@
                     <h2 id="presentToday">0</h2>
                     <p id="presentTodaySub">Present Today</p>
                 </div>
-                <div class="dashboard-card orange" onclick="window.location.href='resources.html'" style="cursor:pointer;">
+                <div class="dashboard-card orange" onclick="window.location.href='resources.html'"
+                    style="cursor:pointer;">
                     <h4>Equipment</h4>
                     <h2 id="equipmentCount">0</h2>
                     <p>Available Items</p>
@@ -103,14 +113,16 @@
 
             <!-- Row 1: Planned Session & Announcements (Requested Layout) -->
             <div class="dashboard-grid-2">
-        
+
 
                 <div class="card workload-card">
                     <div class="card-header">
                         <h3>📢 Announcements</h3>
-                        <button type="button" id="addAnnouncementBtn" class="text-link" style="border:none;background:none;cursor:pointer;">+ Add</button>
+                        <button type="button" id="addAnnouncementBtn" class="text-link"
+                            style="border:none;background:none;cursor:pointer;">+ Add</button>
                     </div>
-                    <div id="announcementList" class="card-subtext" style="max-height: 250px; overflow-y: auto;">Loading announcements...</div>
+                    <div id="announcementList" class="card-subtext" style="max-height: 250px; overflow-y: auto;">Loading
+                        announcements...</div>
                 </div>
             </div>
 
@@ -148,28 +160,36 @@
                     </div>
                     <div class="form-group">
                         <label for="inviteEmail">Email (or mobile number below)</label>
-                        <input type="email" id="inviteEmail" class="form-control" placeholder="teammate@example.com" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                        <input type="email" id="inviteEmail" class="form-control" placeholder="teammate@example.com"
+                            style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
                     </div>
                     <div class="form-group" style="margin-top: 10px;">
                         <label for="inviteMobile">Mobile Number (or email above)</label>
-                        <input type="tel" id="inviteMobile" class="form-control" placeholder="10-digit mobile number" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                        <input type="tel" id="inviteMobile" class="form-control" placeholder="10-digit mobile number"
+                            maxlength="10" pattern="[0-9]{10}" inputmode="numeric"
+                            style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
                     </div>
-                    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div class="form-group"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
                         <div>
                             <label for="inviteRole">Role</label>
-                            <select id="inviteRole" class="form-control" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"></select>
+                            <select id="inviteRole" class="form-control"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"></select>
                         </div>
                         <div>
                             <label for="inviteSport">Sport</label>
-                            <select id="inviteSport" class="form-control" style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"></select>
+                            <select id="inviteSport" class="form-control"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"></select>
                         </div>
                     </div>
                     <div class="form-group" style="display:flex;gap:10px;align-items:center;margin-top:15px;">
                         <button type="button" id="inviteCreateBtn" class="btn-primary">Create Invite Link</button>
-                        <button type="button" id="copyInviteLinkBtn" class="btn-secondary" style="display:none;">Copy</button>
+                        <button type="button" id="copyInviteLinkBtn" class="btn-secondary"
+                            style="display:none;">Copy</button>
                     </div>
                     <div id="inviteFeedback" class="card-subtext" style="margin-top:8px;min-height:18px;"></div>
-                    <input id="inviteLink" readonly style="width:100%;padding:10px;border:1px solid #E5E7EB;border-radius:10px;display:none;background:#F9FAFB;font-size:12px;margin-top:10px;">
+                    <input id="inviteLink" readonly
+                        style="width:100%;padding:10px;border:1px solid #E5E7EB;border-radius:10px;display:none;background:#F9FAFB;font-size:12px;margin-top:10px;">
                 </article>
             </div>
 
@@ -177,36 +197,46 @@
     </div> <!-- end main-content -->
 
     <script src="../js/sidebar.js?v=4"></script>
+    <script src="../js/notifications.js"></script>
     <script src="../js/dashboard.js?v=16"></script>
 
     <!-- Announcement Modal -->
-    <div id="announcementModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div id="announcementModalOverlay"
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
         <div class="card" style="max-width:400px;width:90%;">
             <div class="card-header">
                 <h3>Create Announcement</h3>
-                <button type="button" id="announcementModalCloseBtn" class="text-link" style="border:none;background:none;cursor:pointer;font-size:18px;">✕</button>
+                <button type="button" id="announcementModalCloseBtn" class="text-link"
+                    style="border:none;background:none;cursor:pointer;font-size:18px;">✕</button>
             </div>
             <div class="form-group" style="margin-bottom:15px;">
                 <label for="announcementTitle" style="display:block;margin-bottom:5px;font-weight:600;">Title</label>
-                <input type="text" id="announcementTitle" class="form-control" placeholder="e.g. Holiday Notice" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                <input type="text" id="announcementTitle" class="form-control" placeholder="e.g. Holiday Notice"
+                    style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
             </div>
             <div class="form-group" style="margin-bottom:15px;">
-                <label for="announcementMessage" style="display:block;margin-bottom:5px;font-weight:600;">Message</label>
-                <textarea id="announcementMessage" class="form-control" rows="3" placeholder="Announcement details..." style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;resize:none;"></textarea>
+                <label for="announcementMessage"
+                    style="display:block;margin-bottom:5px;font-weight:600;">Message</label>
+                <textarea id="announcementMessage" class="form-control" rows="3" placeholder="Announcement details..."
+                    style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;resize:none;"></textarea>
             </div>
             <div class="form-group" style="margin-bottom:15px;">
-                <label for="announcementSport" style="display:block;margin-bottom:5px;font-weight:600;">For Sport</label>
-                <select id="announcementSport" class="form-control" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                <label for="announcementSport" style="display:block;margin-bottom:5px;font-weight:600;">For
+                    Sport</label>
+                <select id="announcementSport" class="form-control"
+                    style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
                     <option value="all">All Sports</option>
                     <option value="cricket">Cricket</option>
                     <option value="tennis">Tennis</option>
                     <option value="kabaddi">Kabaddi</option>
                 </select>
             </div>
-            <div id="announcementModalFeedback" class="card-subtext" style="min-height:20px; color: var(--color-danger); margin-bottom:15px;"></div>
+            <div id="announcementModalFeedback" class="card-subtext"
+                style="min-height:20px; color: var(--color-danger); margin-bottom:15px;"></div>
             <div class="form-group" style="display:flex;gap:10px;">
                 <button type="button" id="announcementCreateBtn" class="btn-primary" style="flex:1;">Post</button>
-                <button type="button" id="announcementModalCancelBtn" class="btn-secondary" style="flex:1;">Cancel</button>
+                <button type="button" id="announcementModalCancelBtn" class="btn-secondary"
+                    style="flex:1;">Cancel</button>
             </div>
         </div>
     </div>

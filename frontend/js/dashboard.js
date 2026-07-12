@@ -148,7 +148,15 @@ async function renderDashboard() {
         if (dashboardContainer) dashboardContainer.style.display = 'none';
         const topRow = document.getElementById('athleteTopRow');
         if (topRow) topRow.style.display = 'grid';
+        const mainGrid = document.getElementById('athleteMainGrid');
+        if (mainGrid) mainGrid.style.display = 'block';
+
         renderAthleteProfile(user);
+        loadAthleteTodaySession();
+        loadAthleteAttendance(user);
+        loadAthletePerformance(user);
+        loadAthleteRecentSessions();
+        loadAnnouncements('athleteAnnouncementList');
         return;
     }
 
@@ -158,7 +166,7 @@ async function renderDashboard() {
     loadAttendanceSummary();
     loadPracticeList();
     loadEquipmentSnapshot();
-    loadAnnouncements();
+    loadAnnouncements('announcementList');
 }
 
 async function loadUpcomingMatch() {
@@ -313,8 +321,8 @@ async function loadEquipmentSnapshot() {
     } catch (err) { console.error('Error loading equipment snapshot:', err); }
 }
 
-async function loadAnnouncements() {
-    const listEl = document.getElementById('announcementList');
+async function loadAnnouncements(elId = 'announcementList') {
+    const listEl = document.getElementById(elId);
     if (!listEl) return;
     try {
         const res = await fetch(`${API_BASE_URL}/announcements`, { headers: { Authorization: `Bearer ${getToken()}` } });
@@ -394,7 +402,121 @@ function renderAthleteProfile(user) {
         metaEl.textContent = `${sport} · ${user?.batchAssigned || 'No batch assigned'}`;
     }
 }
+// ── Athlete: Today's Session ──────────────────────────────────────────────
+async function loadAthleteTodaySession() {
+    const el = document.getElementById('athleteTodaySession');
+    if (!el) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/timetable`, { headers: { Authorization: `Bearer ${getToken()}` } });
+        const slots = res.ok ? await res.json() : [];
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+        const todaySlots = (Array.isArray(slots) ? slots : []).filter(s => s.dayOfWeek === today);
 
+        if (!todaySlots.length) {
+            el.innerHTML = '<p class="card-subtext">No session scheduled today. Enjoy your rest day!</p>';
+            return;
+        }
+
+        el.innerHTML = todaySlots.map(s => `
+            <div class="practice-row">
+                <span class="status-dot dark"></span>
+                <div class="practice-info">
+                    <p class="practice-title">${s.activityType}</p>
+                    <p class="practice-meta">${s.location || ''}</p>
+                </div>
+                <span class="practice-time">${s.startTime} - ${s.endTime}</span>
+            </div>`).join('');
+    } catch (err) {
+        console.error('Error loading today session:', err);
+        el.innerHTML = '<p class="card-subtext">Unable to load today\'s session.</p>';
+    }
+}
+
+// ── Athlete: Attendance stats ─────────────────────────────────────────────
+async function loadAthleteAttendance(user) {
+    const el = document.getElementById('athleteAttendanceStats');
+    if (!el) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/attendance/my`, { headers: { Authorization: `Bearer ${getToken()}` } });
+        const history = res.ok ? await res.json() : [];
+
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const thisMonth = (Array.isArray(history) ? history : []).filter(r => new Date(r.date) >= monthStart);
+        const present = thisMonth.filter(r => r.status === 'present').length;
+        const total = thisMonth.length;
+        const pct = total > 0 ? Math.round((present / total) * 100) : 0;
+
+        el.innerHTML = `
+            <div class="stat-box"><p class="stat-label">THIS MONTH</p><p class="stat-value">${total > 0 ? pct + '%' : '—'}</p></div>
+            <div class="stat-box"><p class="stat-label">SESSIONS</p><p class="stat-value">${total || '—'}</p></div>`;
+    } catch (err) {
+        console.error('Error loading athlete attendance:', err);
+        el.innerHTML = '<p class="card-subtext">Unable to load attendance.</p>';
+    }
+}
+
+// ── Athlete: Performance snapshot ─────────────────────────────────────────
+const DASH_PROFILE_METRICS = {
+    cricket: ['Batting Strike Rate', 'Batting Average'],
+    tennis: ['First Serve %', 'Rally Win %'],
+    kabaddi: ['Raid Points', 'Tackle Points'],
+};
+
+async function loadAthletePerformance(user) {
+    const el = document.getElementById('athletePerformanceStats');
+    if (!el) return;
+    const metrics = DASH_PROFILE_METRICS[user?.sport] || DASH_PROFILE_METRICS.cricket;
+    const token = getToken();
+
+    try {
+        const results = await Promise.all(metrics.map(m =>
+            fetch(`${API_BASE_URL}/performance?athleteId=${user.id}&metric=${encodeURIComponent(m)}`,
+                { headers: { Authorization: `Bearer ${token}` } })
+                .then(r => r.ok ? r.json() : { records: [] })
+                .catch(() => ({ records: [] }))
+        ));
+
+        el.innerHTML = metrics.map((label, i) => {
+            const recs = results[i]?.records || [];
+            const latest = recs.length ? recs[recs.length - 1].value : '—';
+            return `<div class="stat-box"><p class="stat-label">${label.toUpperCase()}</p><p class="stat-value">${latest}</p></div>`;
+        }).join('');
+    } catch (err) {
+        console.error('Error loading athlete performance:', err);
+        el.innerHTML = '<p class="card-subtext">Unable to load performance.</p>';
+    }
+}
+
+// ── Athlete: Recent coach notes / sessions ────────────────────────────────
+async function loadAthleteRecentSessions() {
+    const el = document.getElementById('athleteRecentSessions');
+    if (!el) return;
+    try {
+        const res = await fetch(`${API_BASE_URL}/sessions`, { headers: { Authorization: `Bearer ${getToken()}` } });
+        const sessions = res.ok ? await res.json() : [];
+
+        if (!Array.isArray(sessions) || !sessions.length) {
+            el.innerHTML = '<p class="card-subtext">No session notes yet.</p>';
+            return;
+        }
+
+        el.innerHTML = sessions.slice(0, 5).map(s => {
+            const date = new Date(s.sessionDate || s.date).toLocaleDateString();
+            const preview = s.coachNotes ? s.coachNotes.substring(0, 80) : 'No notes added.';
+            const voiceTag = s.voiceNoteUrl ? ' 🎤' : '';
+            return `
+                <div style="padding:10px 12px; border-bottom:1px solid #F0F0F0;">
+                    <p style="font-weight:700;margin:0;font-size:13px;">${s.drillType}${voiceTag}</p>
+                    <p style="font-size:12px;color:#9CA3AF;margin:2px 0 4px;">${date}</p>
+                    <p style="font-size:13px;margin:0;color:#4B5563;">${preview}</p>
+                </div>`;
+        }).join('');
+    } catch (err) {
+        console.error('Error loading recent sessions:', err);
+        el.innerHTML = '<p class="card-subtext">Unable to load session notes.</p>';
+    }
+}
 document.addEventListener('DOMContentLoaded', async () => {
     const user = getStoredUser();
     if (!user || !getToken()) { redirectToLogin(); return; }
