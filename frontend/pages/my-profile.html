@@ -499,7 +499,7 @@
                         <div style="display:flex;justify-content:space-between;align-items:flex-end;">
                             <div>
                                 <div style="font-size:11px;font-weight:600;color:#6B7280;
-                                text-transform:uppercase;margin-bottom:4px">Batch</div>
+                                text-transform:uppercase;margin-bottom:4px" id="batchRowLabel">Batch</div>
                                 <div id="infoBatch" style="font-weight:600"></div>
                             </div>
                             <div id="batchChangeActionWrap"></div>
@@ -508,20 +508,20 @@
                     </div>
                     <div>
                         <div style="font-size:11px;font-weight:600;color:#6B7280;
-                        text-transform:uppercase;margin-bottom:4px">Specialization</div>
+                        text-transform:uppercase;margin-bottom:4px" id="specRowLabel">Specialization</div>
                         <div id="infoSpec" style="font-weight:600"></div>
                     </div>
                     <div>
                         <div style="font-size:11px;font-weight:600;color:#6B7280;
-                        text-transform:uppercase;margin-bottom:4px">Coach</div>
+                        text-transform:uppercase;margin-bottom:4px" id="coachRowLabel">Coach</div>
                         <div id="infoCoach" style="font-weight:600">—</div>
                     </div>
                 </div>
             </div>
 
-            <!-- ── Performance Summary card ── -->
-            <div class="card" style="grid-column:1/-1">
-                <h3 style="font-size:16px;font-weight:700;margin-bottom:16px">📈 Performance Summary</h3>
+            <!-- ── Performance Summary / Academy Overview card ── -->
+            <div class="card" style="grid-column:1/-1" id="perfSummaryCard">
+                <h3 style="font-size:16px;font-weight:700;margin-bottom:16px" id="perfCardTitle">📈 Performance Summary</h3>
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
                     <div style="background:#F9FAFB;border-radius:8px;padding:16px;text-align:center">
                         <div id="perfLabel1" style="font-size:11px;font-weight:600;color:#6B7280;
@@ -536,16 +536,16 @@
                         <div id="perfSub2" style="font-size:11px;color:#6B7280">No data yet</div>
                     </div>
                     <div style="background:#F9FAFB;border-radius:8px;padding:16px;text-align:center">
-                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        <div id="perfLabel3" style="font-size:11px;font-weight:600;color:#6B7280;
                         text-transform:uppercase;margin-bottom:4px">Attendance</div>
                         <div id="perfAttendance" style="font-size:28px;font-weight:800;color:#16A34A">—</div>
-                        <div style="font-size:11px;color:#6B7280">This month</div>
+                        <div id="perfSub3" style="font-size:11px;color:#6B7280">This month</div>
                     </div>
                     <div style="background:#F9FAFB;border-radius:8px;padding:16px;text-align:center">
-                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        <div id="perfLabel4" style="font-size:11px;font-weight:600;color:#6B7280;
                         text-transform:uppercase;margin-bottom:8px">Sessions</div>
                         <div id="perfSessions" style="font-size:28px;font-weight:800">—</div>
-                        <div style="font-size:11px;color:#6B7280">This month</div>
+                        <div id="perfSub4" style="font-size:11px;color:#6B7280">This month</div>
                     </div>
                 </div>
             </div>
@@ -666,21 +666,33 @@
             document.getElementById('editBloodGroup').value = user.bloodGroup || '';
             document.getElementById('editEmergencyContact').value = user.emergencyContact || '';
 
-            loadCoachName(user);
-          if (user.role === 'athlete') {
-    loadPerformanceSummary(user);
-    setupBatchChangeUI(user);
-}
-
-// Hide athlete-only sections for other roles
-if (user.role !== 'athlete') {
-    const batchSection = document.getElementById('batchChangeActionWrap');
-    const batchStatus = document.getElementById('batchChangeStatusRow');
-    const perfSection = document.getElementById('perfSummary');
-    if (batchSection) batchSection.style.display = 'none';
-    if (batchStatus) batchStatus.style.display = 'none';
-    if (perfSection) perfSection.style.display = 'none';
-}
+            if (user.role === 'athlete') {
+                document.getElementById('profileBatch').style.display = '';
+                document.getElementById('profileSpec').style.display = '';
+                document.getElementById('batchRowLabel').textContent = 'Batch';
+                document.getElementById('specRowLabel').textContent = 'Specialization';
+                document.getElementById('coachRowLabel').textContent = 'Coach';
+                loadCoachName(user);
+                loadPerformanceSummary(user);
+                setupBatchChangeUI(user);
+            } else if (user.role === 'coach' || user.role === 'head_coach') {
+                // Coaches don't have a batch/specialization of their own the same way athletes do —
+                // hide the batch-change controls and show what they coach instead.
+                document.getElementById('profileBatch').style.display = user.batchAssigned ? '' : 'none';
+                document.getElementById('profileSpec').style.display = user.specialization ? '' : 'none';
+                document.getElementById('batchChangeActionWrap').style.display = 'none';
+                document.getElementById('batchChangeStatusRow').style.display = 'none';
+                document.getElementById('coachRowLabel').textContent = 'Assigned Batch';
+                document.getElementById('infoCoach').textContent = user.batchAssigned || 'Not yet assigned';
+                loadOwnerOverview(user, 'coach');
+            } else {
+                // Owner — batch/specialization/coach fields don't apply at all; show academy-wide numbers instead.
+                document.getElementById('profileBatch').style.display = 'none';
+                document.getElementById('profileSpec').style.display = 'none';
+                document.getElementById('batchChangeActionWrap').style.display = 'none';
+                document.getElementById('batchChangeStatusRow').style.display = 'none';
+                loadOwnerOverview(user, 'owner');
+            }
         }
 
         // ─── Sport-specific primary metrics shown on the profile ─────────────────────
@@ -694,6 +706,8 @@ if (user.role !== 'athlete') {
             const metrics = PROFILE_METRICS[user.sport] || PROFILE_METRICS.cricket;
             document.getElementById('perfLabel1').textContent = metrics[0];
             document.getElementById('perfLabel2').textContent = metrics[1];
+            document.getElementById('perfLabel3').textContent = 'Attendance';
+            document.getElementById('perfLabel4').textContent = 'Sessions';
 
             const token = getToken();
 
@@ -734,6 +748,79 @@ if (user.role !== 'athlete') {
                 document.getElementById('perfSessions').textContent = total > 0 ? total : '—';
             } catch (err) {
                 console.error('Error loading attendance summary:', err);
+            }
+        }
+
+        // ─── Academy-wide overview for owners/coaches — replaces the athlete-only performance card ──
+        async function loadOwnerOverview(user, viewerRole) {
+            const titleEl = document.getElementById('perfCardTitle');
+            titleEl.textContent = '🏫 Academy Overview';
+            document.getElementById('perfLabel1').textContent = 'Total Athletes';
+            document.getElementById('perfLabel2').textContent = 'Total Batches';
+            document.getElementById('perfLabel4').textContent = 'Upcoming Matches';
+
+            const token = getToken();
+
+            try {
+                const [athletesRes, batchesRes, matchesRes] = await Promise.all([
+                    fetch(`${API}/roster/athletes`, { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(`${API}/batches`, { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(`${API}/matches`, { headers: { Authorization: `Bearer ${token}` } }),
+                ]);
+
+                const athletes = athletesRes.ok ? await athletesRes.json() : [];
+                const batches = batchesRes.ok ? await batchesRes.json() : [];
+                const matches = matchesRes.ok ? await matchesRes.json() : [];
+
+                const totalAthletes = Array.isArray(athletes) ? athletes.length : 0;
+                const totalBatches = Array.isArray(batches) ? batches.length : 0;
+                const totalMatches = Array.isArray(matches) ? matches.length : 0;
+
+                document.getElementById('perfValue1').textContent = totalAthletes;
+                document.getElementById('perfSub1').textContent = 'Registered players';
+                document.getElementById('perfValue2').textContent = totalBatches;
+                document.getElementById('perfSub2').textContent = 'Active batches';
+                document.getElementById('perfSessions').textContent = totalMatches;
+                document.getElementById('perfSub4').textContent = 'Scheduled';
+
+                // Coaches assigned — approximated as the number of distinct coaches running a batch
+                const coachIds = new Set(
+                    (Array.isArray(batches) ? batches : [])
+                        .map(b => b.coachId?._id || b.coachId)
+                        .filter(Boolean)
+                );
+                document.getElementById('coachRowLabel').textContent = 'Coaches Assigned';
+                document.getElementById('infoCoach').textContent = coachIds.size || '—';
+                document.getElementById('batchRowLabel').textContent = 'Total Batches';
+                document.getElementById('infoBatch').textContent = totalBatches;
+                document.getElementById('specRowLabel').textContent = 'Total Athletes';
+                document.getElementById('infoSpec').textContent = totalAthletes;
+
+                // Today's academy-wide attendance rate
+                const today = new Date().toISOString().slice(0, 10);
+                if (Array.isArray(batches) && batches.length > 0) {
+                    const attendanceResults = await Promise.all(
+                        batches.map(b => fetch(`${API}/attendance?batchId=${b._id}&date=${today}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        }).then(r => r.ok ? r.json() : null).catch(() => null))
+                    );
+                    const presentAthletes = new Set();
+                    let markedCount = 0;
+                    attendanceResults.forEach(doc => {
+                        if (doc && Array.isArray(doc.records)) {
+                            markedCount += doc.records.length;
+                            doc.records.forEach(r => { if (r.status === 'present' && r.athlete) presentAthletes.add(r.athlete.toString()); });
+                        }
+                    });
+                    const pct = totalAthletes > 0 ? Math.round((presentAthletes.size / totalAthletes) * 100) : 0;
+                    document.getElementById('perfAttendance').textContent = markedCount > 0 ? `${pct}%` : '—';
+                    document.getElementById('perfSub3').textContent = 'Today';
+                } else {
+                    document.getElementById('perfAttendance').textContent = '—';
+                    document.getElementById('perfSub3').textContent = 'Today';
+                }
+            } catch (err) {
+                console.error('Error loading academy overview:', err);
             }
         }
 
