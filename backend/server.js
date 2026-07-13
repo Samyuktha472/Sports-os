@@ -17,14 +17,6 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
-const session = require('express-session');
-app.use(session({
-    secret: process.env.JWT_SECRET || 'sports_os_secret',
-    resave: false,
-    saveUninitialized: false
-}));
-app.use(passport.initialize());
-app.use(passport.session());
 
 // Static Files
 app.use(express.static(path.join(__dirname, "../frontend")));
