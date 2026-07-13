@@ -23,19 +23,19 @@ const SPORT_FACILITIES = {
         {
             name: 'Net 1 (Pace)', key: 'pace-1',
             slots: [
-    { time: '08:00', name: 'Open', badge: 'free', label: 'FREE' },
-    { time: '09:30', name: 'Open', badge: 'free', label: 'FREE' },
-    { time: '11:00', name: 'Open', badge: 'free', label: 'FREE' },
-],
+                { time: '08:00', name: 'Open', badge: 'free', label: 'FREE' },
+                { time: '09:30', name: 'Open', badge: 'free', label: 'FREE' },
+                { time: '11:00', name: 'Open', badge: 'free', label: 'FREE' },
+            ],
             options: ['PACE', 'FREE'],
         },
         {
             name: 'Net 2 (Spin)', key: 'spin-2',
-           slots: [
-    { time: '08:00', name: 'Open', badge: 'free', label: 'FREE' },
-    { time: '09:30', name: 'Open', badge: 'free', label: 'FREE' },
-    { time: '11:00', name: 'Open', badge: 'free', label: 'FREE' },
-],
+            slots: [
+                { time: '08:00', name: 'Open', badge: 'free', label: 'FREE' },
+                { time: '09:30', name: 'Open', badge: 'free', label: 'FREE' },
+                { time: '11:00', name: 'Open', badge: 'free', label: 'FREE' },
+            ],
             options: ['SPIN', 'FREE'],
         },
         {
@@ -158,7 +158,7 @@ function renderFacilities() {
 
                 <div class="slots-container">
 
-                ${(facility.slots || []).map((slot,index)=>`
+                ${(facility.slots || []).map((slot, index) => `
 
                     <div class="slot-row">
 
@@ -277,19 +277,18 @@ async function createResource(event) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({
-    name,
-    type:"equipment",
-    description,
-    url,
-    quantity,
-
-    equipmentName: name,
-    resourceType: "Equipment",
-    sport: getSport(),
-    available: quantity,
-    inUse: 0,
-    category: type,
-}),
+                name,
+                type: "equipment",
+                description,
+                url,
+                quantity,
+                equipmentName: name,
+                resourceType: "Equipment",
+                sport: getSport(),
+                available: quantity,
+                inUse: 0,
+                category: type,
+            })
         });
         if (!response.ok) throw new Error('Failed to create resource');
         closeResourceForm();
@@ -306,8 +305,8 @@ function buildEquipmentCard(item) {
         item.status === "LOW"
             ? "low"
             : item.status === "OUT"
-            ? "out"
-            : "in-stock";
+                ? "out"
+                : "in-stock";
 
     return `
     <div class="equipment-card" data-equipment-id="${item._id}">
@@ -382,43 +381,43 @@ function renderEquipment() {
             const id = button.dataset.id;
             const item = resourcesState.equipment.find(e => e._id === id);
             if (!item) return;
-           item.quantity = (item.quantity || 0) + 1;
+            item.quantity = (item.quantity || 0) + 1;
 
-document.getElementById(`qty-${id}`).textContent = item.quantity;
+            document.getElementById(`qty-${id}`).textContent = item.quantity;
 
-await patchResource(id, {
-    quantity: item.quantity,
-});
+            await patchResource(id, {
+                quantity: item.quantity,
+            });
         });
     });
     document.querySelectorAll(".delete-equipment-btn").forEach(btn => {
 
-    btn.addEventListener("click", () => {
+        btn.addEventListener("click", () => {
 
-        const id = btn.dataset.id;
+            const id = btn.dataset.id;
 
-        deleteEquipment(id);
+            deleteEquipment(id);
+
+        });
 
     });
+    document.querySelectorAll(".qty-btn.decrement").forEach(button => {
+        button.addEventListener("click", async () => {
+            const id = button.dataset.id;
+            const item = resourcesState.equipment.find(e => e._id === id);
 
-});
-document.querySelectorAll(".qty-btn.decrement").forEach(button => {
-    button.addEventListener("click", async () => {
-        const id = button.dataset.id;
-        const item = resourcesState.equipment.find(e => e._id === id);
+            if (!item) return;
 
-        if (!item) return;
+            item.quantity = Math.max(0, (item.quantity || 0) - 1);
 
-       item.quantity = Math.max(0, (item.quantity || 0) - 1);
+            document.getElementById(`qty-${id}`).textContent = item.quantity;
 
-document.getElementById(`qty-${id}`).textContent = item.quantity;
-
-await patchResource(id, {
-    quantity: item.quantity
-});
+            await patchResource(id, {
+                quantity: item.quantity
+            });
+        });
     });
-});
-   
+
 }
 function setupSlotForms() {
 
@@ -540,14 +539,14 @@ async function fetchResources() {
     if (!token) { redirectToLogin(); return; }
 
     try {
-       const equipRes = await fetch(
-    `${API_BASE_URL}/resources?resourceType=Equipment&sport=${getSport()}`,
-    {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    }
-);
+        const equipRes = await fetch(
+            `${API_BASE_URL}/resources?type=equipment&sport=${getSport()}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
         const equipData = await equipRes.json();
         if (!equipRes.ok) throw new Error('Unable to load equipment data');
         resourcesState.equipment = equipData;
@@ -572,15 +571,15 @@ async function patchResource(id, update) {
         if (!response.ok) throw new Error('Failed to update resource');
         const updatedResource = await response.json();
         if (updatedResource.resourceType === "Equipment") {
-   const index = resourcesState.equipment.findIndex(
-    e => e._id === updatedResource._id
-);
+            const index = resourcesState.equipment.findIndex(
+                e => e._id === updatedResource._id
+            );
 
-if (index !== -1) {
-    resourcesState.equipment[index] = updatedResource;
-    renderEquipment();
-}
-}
+            if (index !== -1) {
+                resourcesState.equipment[index] = updatedResource;
+                renderEquipment();
+            }
+        }
     } catch (error) {
         console.error('Error updating resource:', error);
     }
@@ -638,13 +637,13 @@ async function saveEquipment() {
     const category = document.getElementById("equipmentCategory").value;
     let status;
 
-if (quantity === 0) {
-    status = "OUT";
-} else if (quantity <= 10) {
-    status = "LOW";
-} else {
-    status = "IN STOCK";
-}
+    if (quantity === 0) {
+        status = "OUT";
+    } else if (quantity <= 10) {
+        status = "LOW";
+    } else {
+        status = "IN STOCK";
+    }
     if (!name || quantity < 0) {
         alert("Please fill all fields.");
         return;
@@ -658,14 +657,14 @@ if (quantity === 0) {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`
             },
-           body: JSON.stringify({
-    name,
-    type: "equipment",
-    category,
-    quantity,
-    condition,
-    status
-})
+            body: JSON.stringify({
+                name,
+                type: "equipment",
+                category,
+                quantity,
+                condition,
+                status
+            })
         });
 
         if (!response.ok) {
