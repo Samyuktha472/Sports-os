@@ -337,7 +337,7 @@ exports.googleCallback = async (req, res) => {
             academyName: user.academyName || '',
         });
 
-        res.redirect(`/login.html?googleAuth=${encodeURIComponent(params.toString())}`);
+        res.redirect(`${process.env.FRONTEND_URL || ''}/login.html?googleAuth=${encodeURIComponent(params.toString())}`);
     } catch (err) {
         res.redirect('/login.html?error=google_failed');
     }
