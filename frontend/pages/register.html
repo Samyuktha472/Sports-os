@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Your Academy - Sports OS</title>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/auth.css">
+    <style>
+        .pw-requirements {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--color-muted);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .pw-requirements .req {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pw-requirements .req .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #E5E7EB;
+            flex-shrink: 0;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .pw-requirements .req.met .dot {
+            background: #16A34A;
+        }
+        .pw-requirements .req.met {
+            color: #16A34A;
+        }
+        .field-error {
+            font-size: 12px;
+            color: var(--color-danger);
+            margin-top: 6px;
+            display: none;
+        }
+        .field-error.show {
+            display: block;
+        }
+        .form-control.invalid {
+            border-color: var(--color-danger);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-left">
+            <div class="logo-wrap">
+                <div class="logo-icon">🏆</div>
+                <div>
+                    <div class="logo-text">Sports OS</div>
+                    <div class="logo-subtitle">SPORTS ACADEMY</div>
+                </div>
+            </div>
+            <h1>Start your own academy.</h1>
+            <p class="auth-left-subtext">Register as the owner, then invite your staff and athletes.</p>
+            <ul class="feature-list">
+                <li><span class="feature-check">✓</span> Multi-sport academy management</li>
+                <li><span class="feature-check">✓</span> Invite-only staff & athlete onboarding</li>
+                <li><span class="feature-check">✓</span> Performance tracking built for your sport</li>
+            </ul>
+        </div>
+
+        <div class="auth-right">
+            <div class="auth-form-wrap">
+                <h2>Create your academy</h2>
+                <p class="form-subtext">This registers you as the <strong>Owner</strong>. Coaches and athletes join later via invite link.</p>
+
+                <form id="registerForm" novalidate>
+                    <div class="form-group">
+                        <label for="academyName">Academy Name</label>
+                        <input type="text" id="academyName" name="academyName" class="form-control" placeholder="Enter your Academy Name" required minlength="3" maxlength="80">
+                        <div class="field-error" id="academyNameError">Academy name must be at least 3 characters.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="name">Your Full Name</label>
+                        <input type="text" id="name" name="name" class="form-control" placeholder="Enter your name" required>
+                        <div class="field-error" id="nameError">Name must start with a letter and contain only letters, spaces, hyphens or apostrophes.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
+                        <div class="field-error" id="emailError">Enter a valid email address (e.g. name@example.com).</div>
+                    </div>
+                    <div class="form-group">
+    <label for="phone">Mobile Number</label>
+<input
+    type="tel"
+    id="phone"
+    name="phone"
+    class="form-control"
+    placeholder="Enter 10-digit mobile number"
+    maxlength="10"
+    inputmode="numeric"
+    required
+    oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
+
+<div class="field-error" id="phoneError">
+    Mobile number must contain exactly 10 digits.
+</div>
+</div>
+
+                    <div class="form-group">
+                        <label>Sport</label>
+                        <div class="role-grid" id="sportGrid">
+                            <div class="role-card active" data-sport="cricket" onclick="selectSport('cricket')">
+                                <span class="role-icon">🏏</span>
+                                <div class="role-name">Cricket</div>
+                            </div>
+                            <div class="role-card" data-sport="tennis" onclick="selectSport('tennis')">
+                                <span class="role-icon">🎾</span>
+                                <div class="role-name">Tennis</div>
+                            </div>
+                            <div class="role-card" data-sport="kabaddi" onclick="selectSport('kabaddi')">
+                                <span class="role-icon">🤼‍♂️</span>
+                                <div class="role-name">Kabaddi</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" required>
+                            <button type="button" class="show-password-btn" onclick="togglePassword('password')">👁</button>
+                        </div>
+                        <div class="pw-requirements" id="pwRequirements">
+                            <div class="req" data-rule="length"><span class="dot">✓</span> 8+ characters</div>
+                            <div class="req" data-rule="upper"><span class="dot">✓</span> Uppercase letter</div>
+                            <div class="req" data-rule="lower"><span class="dot">✓</span> Lowercase letter</div>
+                            <div class="req" data-rule="number"><span class="dot">✓</span> Number</div>
+                            <div class="req" data-rule="special"><span class="dot">✓</span> Special character (@$!%*?&)</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
+                            <button type="button" class="show-password-btn" onclick="togglePassword('confirmPassword')">👁</button>
+                        </div>
+                        <div class="field-error" id="confirmPasswordError">Passwords do not match.</div>
+                    </div>
+
+                    <div id="errorMessage" class="error-message"></div>
+                    <button type="submit" class="btn-primary" style="width:100%;margin-top:8px;" id="submitBtn">Create Academy & Register</button>
+                </form>
+
+                <div class="auth-link-bottom">
+                    Already have an account? <a href="login.html">Sign In →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Use whatever host the page is actually served from, instead of a hardcoded production URL.
+        // This means local dev hits your local backend, and the deployed site hits itself.
+        const API_URL = `${window.location.origin}/api/auth`;
+
+      let selectedSports = ['cricket']; // cricket pre-selected by default
+function selectSport(sport) {
+    const card = document.querySelector(`#sportGrid [data-sport="${sport}"]`);
+    if (selectedSports.includes(sport)) {
+        // deselect
+        selectedSports = selectedSports.filter(s => s !== sport);
+        card.classList.remove('active');
+    } else {
+        // select
+        selectedSports.push(sport);
+        card.classList.add('active');
+    }
+}
+
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            field.type = field.type === 'password' ? 'text' : 'password';
+        }
+
+        // ---- Validation rules ----
+        const nameRegex = /^[A-Za-z][A-Za-z\s'-]{1,49}$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+        const passwordRules = {
+            length: pw => pw.length >= 8,
+            upper: pw => /[A-Z]/.test(pw),
+            lower: pw => /[a-z]/.test(pw),
+            number: pw => /\d/.test(pw),
+            special: pw => /[@$!%*?&]/.test(pw),
+        };
+
+        function isStrongPassword(pw) {
+            return Object.values(passwordRules).every(fn => fn(pw));
+        }
+
+        // Live password requirement checklist
+        document.getElementById('password').addEventListener('input', (e) => {
+            const pw = e.target.value;
+            Object.entries(passwordRules).forEach(([rule, fn]) => {
+                const el = document.querySelector(`.req[data-rule="${rule}"]`);
+                el.classList.toggle('met', fn(pw));
+            });
+        });
+
+        function setFieldError(inputId, errorId, show) {
+            document.getElementById(inputId).classList.toggle('invalid', show);
+            document.getElementById(errorId).classList.toggle('show', show);
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = '';
+
+            const academyName = document.getElementById('academyName').value.trim();
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+
+            let valid = true;
+
+            if (academyName.length < 3) {
+                setFieldError('academyName', 'academyNameError', true);
+                valid = false;
+            } else {
+                setFieldError('academyName', 'academyNameError', false);
+            }
+
+            if (!nameRegex.test(name)) {
+                setFieldError('name', 'nameError', true);
+                valid = false;
+            } else {
+                setFieldError('name', 'nameError', false);
+            }
+
+            if (!emailRegex.test(email)) {
+                setFieldError('email', 'emailError', true);
+                valid = false;
+            } else {
+                setFieldError('email', 'emailError', false);
+            }
+
+            if (!isStrongPassword(password)) {
+                valid = false;
+                errorMessage.textContent = 'Password does not meet all requirements above.';
+            }
+
+            if (password !== confirmPassword) {
+                setFieldError('confirmPassword', 'confirmPasswordError', true);
+                valid = false;
+            } else {
+                setFieldError('confirmPassword', 'confirmPasswordError', false);
+            }
+     if (!/^\d{10}$/.test(phone)) {
+    setFieldError('phone', 'phoneError', true);
+    valid = false;
+} else {
+    setFieldError('phone', 'phoneError', false);
+}
+
+            if (!valid) return;
+
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+    name,
+    email,
+    phone,
+    password,
+    academyName,
+    sports: selectedSports,
+    role: 'owner',
+}),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('user', JSON.stringify({ ...(data.user || {}), token: data.token }));
+                    window.location.href = 'dashboard.html';
+                } else {
+                    errorMessage.textContent = data.message || 'Registration failed.';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'An error occurred. Please try again.';
+                console.error('Error:', error);
+            }
+        });
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('SW registered'))
+                .catch(err => console.log('SW failed:', err));
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile · Sports OS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/sidebar.css?v=3">
+    <style>
+        /* ── Avatar upload area ── */
+        .avatar-wrap {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .avatar-wrap:hover .avatar-overlay {
+            opacity: 1;
+        }
+
+        #profileAvatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #F5C518;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: #111827;
+            object-fit: cover;
+            /* works when swapped to <img> */
+            overflow: hidden;
+        }
+
+        #profileAvatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .avatar-overlay {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity .2s;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        /* ── Photo save bar (hidden until a photo is picked) ── */
+        #photoBar {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+        }
+
+        #photoPreview {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #F5C518;
+        }
+
+        /* ── Info card edit mode ── */
+        .info-field-value {
+            font-weight: 600;
+        }
+
+        .info-field-input {
+            display: none;
+            width: 100%;
+            padding: 7px 10px;
+            border: 1.5px solid #D1D5DB;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            font-weight: 600;
+            color: #111827;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color .15s;
+        }
+
+        .info-field-input:focus {
+            border-color: #F5C518;
+        }
+
+        /* edit mode: hide values, show inputs */
+        .card.editing .info-field-value {
+            display: none;
+        }
+
+        .card.editing .info-field-input {
+            display: block;
+        }
+
+        /* ── Shared button helpers ── */
+        .btn-icon {
+            background: none;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 6px;
+            padding: 5px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background .15s, border-color .15s;
+        }
+
+        .btn-icon:hover {
+            background: #F3F4F6;
+        }
+
+        .btn-icon.primary {
+            background: #F5C518;
+            border-color: #F5C518;
+            color: #111827;
+        }
+
+        .btn-icon.primary:hover {
+            background: #EAB308;
+            border-color: #EAB308;
+        }
+
+        .btn-icon.danger {
+            color: #DC2626;
+            border-color: #FCA5A5;
+        }
+
+        .btn-icon.danger:hover {
+            background: #FEF2F2;
+        }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: #111827;
+            color: #fff;
+            padding: 11px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s;
+            z-index: 9999;
+        }
+
+        #toast.show {
+            opacity: 1;
+        }
+
+        #toast.success {
+            background: #16A34A;
+        }
+
+        #toast.error {
+            background: #DC2626;
+        }
+
+        /* ── Batch change: status row + modals ── */
+        #batchChangeStatusRow {
+            margin-top: 10px;
+        }
+
+        .bc-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .bc-badge.pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .bc-badge.approved {
+            background: #DCFCE7;
+            color: #16A34A;
+        }
+
+        .bc-badge.rejected {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #fff;
+            border-radius: 12px;
+            width: 420px;
+            max-width: 92vw;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #F0F0F0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #6B7280;
+        }
+
+        .modal-body {
+            padding: 18px 20px;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 14px 20px;
+            border-top: 1px solid #F0F0F0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .field-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #6B7280;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .field-select,
+        .field-textarea {
+            width: 100%;
+            padding: 9px 10px;
+            border: 1.5px solid #D1D5DB;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+            margin-bottom: 14px;
+        }
+
+        .field-select:focus,
+        .field-textarea:focus {
+            border-color: #F5C518;
+        }
+
+        .field-textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        /* Chat thread */
+        #chatMessages {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 320px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .chat-bubble .chat-meta {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+            opacity: 0.7;
+        }
+
+        .chat-bubble.mine {
+            align-self: flex-end;
+            background: #F5C518;
+            color: #111827;
+        }
+
+        .chat-bubble.theirs {
+            align-self: flex-start;
+            background: #F3F4F6;
+            color: #111827;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-row input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1.5px solid #D1D5DB;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .chat-input-row input:focus {
+            border-color: #F5C518;
+        }
+
+        .bc-resolved-note {
+            font-size: 12px;
+            color: #6B7280;
+            text-align: center;
+            padding: 8px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebar"></div>
+    <div class="main-content">
+
+        <p id="pageDate" class="page-date"></p>
+        <h1 class="page-title">My Profile</h1>
+        <p class="page-subtitle" style="color:#6B7280;margin-bottom:28px">
+            Your personal details and academy information.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+            <!-- ── Profile hero card ── -->
+            <div class="card" style="grid-column:1/-1">
+                <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">
+
+                    <!-- Clickable avatar -->
+                    <div class="avatar-wrap" id="avatarWrap" title="Change photo">
+                        <div id="profileAvatar"></div>
+                        <div class="avatar-overlay">📷<br>Change</div>
+                    </div>
+                    <input type="file" id="photoInput" accept="image/*" style="display:none">
+
+                    <div style="flex:1;min-width:0">
+                        <h2 id="profileName" style="font-size:24px;font-weight:800"></h2>
+                        <p id="profileRole" style="color:#6B7280;font-size:14px;margin-top:2px"></p>
+                        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+                            <span id="profileBatch" style="background:#DCFCE7;color:#16A34A;
+                            padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600"></span>
+                            <span id="profileSpec" style="background:#DBEAFE;color:#1D4ED8;
+                            padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600"></span>
+                        </div>
+
+                        <!-- Photo pick bar -->
+                        <div id="photoBar">
+                            <img id="photoPreview" src="" alt="preview">
+                            <span id="photoFileName" style="font-size:13px;color:#6B7280;flex:1"></span>
+                            <button class="btn-icon primary" id="savePhotoBtn">Save Photo</button>
+                            <button class="btn-icon danger" id="cancelPhotoBtn">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Personal Information card ── -->
+            <div class="card" id="personalCard">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="font-size:16px;font-weight:700;margin:0">👤 Personal Information</h3>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn-icon" id="editBtn">✏️ Edit</button>
+                        <button class="btn-icon primary" id="saveBtn" style="display:none">Save</button>
+                        <button class="btn-icon" id="cancelBtn" style="display:none">Cancel</button>
+                    </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:14px">
+                    <!-- Full Name -->
+                    <div>
+                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:4px">Full Name</div>
+                        <div class="info-field-value" id="infoName"></div>
+                        <input class="info-field-input" id="editName" type="text" placeholder="Full name">
+                    </div>
+                    <!-- Email -->
+                    <div>
+                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:4px">Email</div>
+                        <div class="info-field-value" id="infoEmail"></div>
+                        <input class="info-field-input" id="editEmail" type="email" placeholder="Email address">
+                    </div>
+                    <!-- Phone -->
+                    <div>
+                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:4px">Phone</div>
+                        <div class="info-field-value" id="infoPhone"></div>
+                        <input class="info-field-input" id="editPhone" type="text" placeholder="Phone number">
+                    </div>
+                    <!-- Blood Group -->
+                    <div>
+                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:4px">Blood Group</div>
+                        <div class="info-field-value" id="infoBloodGroup"></div>
+                        <select class="info-field-input" id="editBloodGroup">
+                            <option value="">Select blood group</option>
+                            <option>A+</option>
+                            <option>A-</option>
+                            <option>B+</option>
+                            <option>B-</option>
+                            <option>AB+</option>
+                            <option>AB-</option>
+                            <option>O+</option>
+                            <option>O-</option>
+                        </select>
+                    </div>
+                    <!-- Emergency Contact -->
+                    <div>
+                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:4px">Emergency Contact</div>
+                        <div class="info-field-value" id="infoEmergencyContact"></div>
+                        <input class="info-field-input" id="editEmergencyContact" type="text"
+                            placeholder="Name and phone number">
+                    </div>
+                    <!-- Role — read-only always -->
+                    <div>
+                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:4px">Role</div>
+                        <div class="info-field-value" id="infoRole"></div>
+                    </div>
+                    <!-- Joined — read-only always -->
+                    <div>
+                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:4px">Joined</div>
+                        <div class="info-field-value" id="infoJoined"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Academy Information card ── -->
+            <div class="card">
+                <h3 style="font-size:16px;font-weight:700;margin-bottom:16px">🏏 Academy Information</h3>
+                <div style="display:flex;flex-direction:column;gap:14px">
+                    <div>
+                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:4px">Academy</div>
+                        <div style="font-weight:600" id="infoAcademyName">Sports OS Academy</div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+                            <div>
+                                <div style="font-size:11px;font-weight:600;color:#6B7280;
+                                text-transform:uppercase;margin-bottom:4px" id="batchRowLabel">Batch</div>
+                                <div id="infoBatch" style="font-weight:600"></div>
+                            </div>
+                            <div id="batchChangeActionWrap"></div>
+                        </div>
+                        <div id="batchChangeStatusRow"></div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:4px" id="specRowLabel">Specialization</div>
+                        <div id="infoSpec" style="font-weight:600"></div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:4px" id="coachRowLabel">Coach</div>
+                        <div id="infoCoach" style="font-weight:600">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Performance Summary / Academy Overview card ── -->
+            <div class="card" style="grid-column:1/-1" id="perfSummaryCard">
+                <h3 style="font-size:16px;font-weight:700;margin-bottom:16px" id="perfCardTitle">📈 Performance Summary</h3>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+                    <div style="background:#F9FAFB;border-radius:8px;padding:16px;text-align:center">
+                        <div id="perfLabel1" style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:8px">—</div>
+                        <div id="perfValue1" style="font-size:28px;font-weight:800">—</div>
+                        <div id="perfSub1" style="font-size:11px;color:#6B7280">No data yet</div>
+                    </div>
+                    <div style="background:#F9FAFB;border-radius:8px;padding:16px;text-align:center">
+                        <div id="perfLabel2" style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:8px">—</div>
+                        <div id="perfValue2" style="font-size:28px;font-weight:800">—</div>
+                        <div id="perfSub2" style="font-size:11px;color:#6B7280">No data yet</div>
+                    </div>
+                    <div style="background:#F9FAFB;border-radius:8px;padding:16px;text-align:center">
+                        <div id="perfLabel3" style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:4px">Attendance</div>
+                        <div id="perfAttendance" style="font-size:28px;font-weight:800;color:#16A34A">—</div>
+                        <div id="perfSub3" style="font-size:11px;color:#6B7280">This month</div>
+                    </div>
+                    <div style="background:#F9FAFB;border-radius:8px;padding:16px;text-align:center">
+                        <div id="perfLabel4" style="font-size:11px;font-weight:600;color:#6B7280;
+                        text-transform:uppercase;margin-bottom:8px">Sessions</div>
+                        <div id="perfSessions" style="font-size:28px;font-weight:800">—</div>
+                        <div id="perfSub4" style="font-size:11px;color:#6B7280">This month</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div><!-- /main-content -->
+
+    <div id="toast"></div>
+
+    <!-- ── Batch Change Request modal ── -->
+    <div class="modal-overlay" id="batchChangeModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Request Batch Change</h3>
+                <button class="modal-close-btn" id="bcModalCloseBtn">✕</button>
+            </div>
+            <div class="modal-body">
+                <label class="field-label" for="bcTargetBatch">Move to batch</label>
+                <select class="field-select" id="bcTargetBatch">
+                    <option value="">Select a batch…</option>
+                </select>
+
+                <label class="field-label" for="bcReason">Reason for change</label>
+                <textarea class="field-textarea" id="bcReason"
+                    placeholder="Tell your coach why you'd like to switch batches…"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-icon" id="bcCancelBtn">Cancel</button>
+                <button class="btn-icon primary" id="bcSubmitBtn">Send Request</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Chat thread modal ── -->
+    <div class="modal-overlay" id="chatModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="chatModalTitle">Batch Change Request</h3>
+                <button class="modal-close-btn" id="chatModalCloseBtn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="chatMessages"></div>
+                <div id="chatInputWrap" class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="Type a message…">
+                    <button class="btn-icon primary" id="chatSendBtn">Send</button>
+                </div>
+                <div id="chatResolvedNote" class="bc-resolved-note" style="display:none"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/sidebar.js?v=4"></script>
+    <script src="../js/notifications.js"></script>
+    <script>
+        const API = `${window.location.origin}/api`;
+
+        // ─── Helpers ──────────────────────────────────────────────────────────────────
+        function getToken() {
+            const u = JSON.parse(localStorage.getItem('user'));
+            return u?.token || localStorage.getItem('token');
+        }
+        function getUser() {
+            try { return JSON.parse(localStorage.getItem('user')) || null; }
+            catch { return null; }
+        }
+        function saveUser(updated) {
+            // Merge updated fields into the stored object (preserve token etc.)
+            const current = getUser() || {};
+            localStorage.setItem('user', JSON.stringify({ ...current, ...updated }));
+        }
+        function authHeaders() {
+            return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` };
+        }
+
+        let toastTimer;
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `show ${type}`;
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.className = '', 3000);
+        }
+
+        // ─── Render user data into the page ──────────────────────────────────────────
+        function renderUser(user) {
+            const initials = user.initials || user.name?.slice(0, 2).toUpperCase() || 'AT';
+            const avatarEl = document.getElementById('profileAvatar');
+
+            if (user.profilePicture) {
+                avatarEl.innerHTML = `<img src="${user.profilePicture}" alt="${user.name}">`;
+            } else {
+                avatarEl.textContent = initials;
+                avatarEl.style.background = '#F5C518';
+            }
+
+            document.getElementById('profileName').textContent = user.name || '';
+            document.getElementById('profileRole').textContent = capitalise(user.role || '');
+            document.getElementById('profileBatch').textContent = user.batchAssigned || '—';
+            document.getElementById('profileSpec').textContent = user.specialization || '—';
+
+            document.getElementById('infoName').textContent = user.name || '';
+            document.getElementById('infoEmail').textContent = user.email || '';
+            document.getElementById('infoRole').textContent = capitalise(user.role || '');
+            document.getElementById('infoJoined').textContent = formatJoined(user.createdAt);
+
+            document.getElementById('infoBatch').textContent = user.batchAssigned || '—';
+            document.getElementById('infoSpec').textContent = user.specialization || '—';
+            document.getElementById('infoAcademyName').textContent = user.academyName || '—';
+
+            document.getElementById('infoPhone').textContent = user.phone || '—';
+            document.getElementById('infoBloodGroup').textContent = user.bloodGroup || '—';
+            document.getElementById('infoEmergencyContact').textContent = user.emergencyContact || '—';
+
+            // Pre-fill edit inputs too
+            document.getElementById('editName').value = user.name || '';
+            document.getElementById('editEmail').value = user.email || '';
+            document.getElementById('editPhone').value = user.phone || '';
+            document.getElementById('editBloodGroup').value = user.bloodGroup || '';
+            document.getElementById('editEmergencyContact').value = user.emergencyContact || '';
+
+            if (user.role === 'athlete') {
+                document.getElementById('profileBatch').style.display = '';
+                document.getElementById('profileSpec').style.display = '';
+                document.getElementById('batchRowLabel').textContent = 'Batch';
+                document.getElementById('specRowLabel').textContent = 'Specialization';
+                document.getElementById('coachRowLabel').textContent = 'Coach';
+                loadCoachName(user);
+                loadPerformanceSummary(user);
+                setupBatchChangeUI(user);
+            } else if (user.role === 'coach' || user.role === 'head_coach') {
+                // Coaches don't have a batch/specialization of their own the same way athletes do —
+                // hide the batch-change controls and show what they coach instead.
+                document.getElementById('profileBatch').style.display = user.batchAssigned ? '' : 'none';
+                document.getElementById('profileSpec').style.display = user.specialization ? '' : 'none';
+                document.getElementById('batchChangeActionWrap').style.display = 'none';
+                document.getElementById('batchChangeStatusRow').style.display = 'none';
+                document.getElementById('coachRowLabel').textContent = 'Assigned Batch';
+                document.getElementById('infoCoach').textContent = user.batchAssigned || 'Not yet assigned';
+                loadOwnerOverview(user, 'coach');
+            } else {
+                // Owner — batch/specialization/coach fields don't apply at all; show academy-wide numbers instead.
+                document.getElementById('profileBatch').style.display = 'none';
+                document.getElementById('profileSpec').style.display = 'none';
+                document.getElementById('batchChangeActionWrap').style.display = 'none';
+                document.getElementById('batchChangeStatusRow').style.display = 'none';
+                loadOwnerOverview(user, 'owner');
+            }
+        }
+
+        // ─── Sport-specific primary metrics shown on the profile ─────────────────────
+        const PROFILE_METRICS = {
+            cricket: ['Batting Strike Rate', 'Batting Average'],
+            tennis: ['First Serve %', 'Rally Win %'],
+            kabaddi: ['Raid Points', 'Tackle Points'],
+        };
+
+        async function loadPerformanceSummary(user) {
+            const metrics = PROFILE_METRICS[user.sport] || PROFILE_METRICS.cricket;
+            document.getElementById('perfLabel1').textContent = metrics[0];
+            document.getElementById('perfLabel2').textContent = metrics[1];
+            document.getElementById('perfLabel3').textContent = 'Attendance';
+            document.getElementById('perfLabel4').textContent = 'Sessions';
+
+            const token = getToken();
+
+            // Latest recorded value for each metric (real data only — no fake fallback)
+            for (let i = 0; i < metrics.length; i++) {
+                try {
+                    const res = await fetch(`${API}/performance?athleteId=${user.id}&metric=${encodeURIComponent(metrics[i])}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const data = res.ok ? await res.json() : { records: [] };
+                    const valueEl = document.getElementById(`perfValue${i + 1}`);
+                    const subEl = document.getElementById(`perfSub${i + 1}`);
+                    if (data.records && data.records.length > 0) {
+                        const latest = data.records[data.records.length - 1];
+                        valueEl.textContent = latest.value;
+                        subEl.textContent = 'Latest recorded';
+                    } else {
+                        valueEl.textContent = '—';
+                        subEl.textContent = 'No data yet';
+                    }
+                } catch (err) {
+                    console.error('Error loading performance metric:', err);
+                }
+            }
+
+            // Attendance % and session count this month — from the athlete's own real attendance history
+            try {
+                const now = new Date();
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const res = await fetch(`${API}/attendance/my`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const history = res.ok ? await res.json() : [];
+                const thisMonth = (Array.isArray(history) ? history : []).filter(r => new Date(r.date) >= monthStart);
+                const present = thisMonth.filter(r => r.status === 'present').length;
+                const total = thisMonth.length;
+                document.getElementById('perfAttendance').textContent = total > 0 ? `${Math.round((present / total) * 100)}%` : '—';
+                document.getElementById('perfSessions').textContent = total > 0 ? total : '—';
+            } catch (err) {
+                console.error('Error loading attendance summary:', err);
+            }
+        }
+
+        // ─── Academy-wide overview for owners/coaches — replaces the athlete-only performance card ──
+        async function loadOwnerOverview(user, viewerRole) {
+            const titleEl = document.getElementById('perfCardTitle');
+            titleEl.textContent = '🏫 Academy Overview';
+            document.getElementById('perfLabel1').textContent = 'Total Athletes';
+            document.getElementById('perfLabel2').textContent = 'Total Batches';
+            document.getElementById('perfLabel4').textContent = 'Upcoming Matches';
+
+            const token = getToken();
+
+            try {
+                const [athletesRes, batchesRes, matchesRes] = await Promise.all([
+                    fetch(`${API}/roster/athletes`, { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(`${API}/batches`, { headers: { Authorization: `Bearer ${token}` } }),
+                    fetch(`${API}/matches`, { headers: { Authorization: `Bearer ${token}` } }),
+                ]);
+
+                const athletes = athletesRes.ok ? await athletesRes.json() : [];
+                const batches = batchesRes.ok ? await batchesRes.json() : [];
+                const matches = matchesRes.ok ? await matchesRes.json() : [];
+
+                const totalAthletes = Array.isArray(athletes) ? athletes.length : 0;
+                const totalBatches = Array.isArray(batches) ? batches.length : 0;
+                const totalMatches = Array.isArray(matches) ? matches.length : 0;
+
+                document.getElementById('perfValue1').textContent = totalAthletes;
+                document.getElementById('perfSub1').textContent = 'Registered players';
+                document.getElementById('perfValue2').textContent = totalBatches;
+                document.getElementById('perfSub2').textContent = 'Active batches';
+                document.getElementById('perfSessions').textContent = totalMatches;
+                document.getElementById('perfSub4').textContent = 'Scheduled';
+
+                // Coaches assigned — approximated as the number of distinct coaches running a batch
+                const coachIds = new Set(
+                    (Array.isArray(batches) ? batches : [])
+                        .map(b => b.coachId?._id || b.coachId)
+                        .filter(Boolean)
+                );
+                document.getElementById('coachRowLabel').textContent = 'Coaches Assigned';
+                document.getElementById('infoCoach').textContent = coachIds.size || '—';
+                document.getElementById('batchRowLabel').textContent = 'Total Batches';
+                document.getElementById('infoBatch').textContent = totalBatches;
+                document.getElementById('specRowLabel').textContent = 'Total Athletes';
+                document.getElementById('infoSpec').textContent = totalAthletes;
+
+                // Today's academy-wide attendance rate
+                const today = new Date().toISOString().slice(0, 10);
+                if (Array.isArray(batches) && batches.length > 0) {
+                    const attendanceResults = await Promise.all(
+                        batches.map(b => fetch(`${API}/attendance?batchId=${b._id}&date=${today}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        }).then(r => r.ok ? r.json() : null).catch(() => null))
+                    );
+                    const presentAthletes = new Set();
+                    let markedCount = 0;
+                    attendanceResults.forEach(doc => {
+                        if (doc && Array.isArray(doc.records)) {
+                            markedCount += doc.records.length;
+                            doc.records.forEach(r => { if (r.status === 'present' && r.athlete) presentAthletes.add(r.athlete.toString()); });
+                        }
+                    });
+                    const pct = totalAthletes > 0 ? Math.round((presentAthletes.size / totalAthletes) * 100) : 0;
+                    document.getElementById('perfAttendance').textContent = markedCount > 0 ? `${pct}%` : '—';
+                    document.getElementById('perfSub3').textContent = 'Today';
+                } else {
+                    document.getElementById('perfAttendance').textContent = '—';
+                    document.getElementById('perfSub3').textContent = 'Today';
+                }
+            } catch (err) {
+                console.error('Error loading academy overview:', err);
+            }
+        }
+
+        // ─── Look up the real coach for this athlete's batch ─────────────────────────
+        async function loadCoachName(user) {
+            const coachEl = document.getElementById('infoCoach');
+            if (!coachEl) return;
+            if (!user.batchAssigned) { coachEl.textContent = '—'; return; }
+
+            try {
+                const res = await fetch(`${API}/batches`, {
+                    headers: { Authorization: `Bearer ${getToken()}` }
+                });
+                if (!res.ok) { coachEl.textContent = '—'; return; }
+                const batches = await res.json();
+                const myBatch = batches.find(b => (b.name || '').toLowerCase() === user.batchAssigned.toLowerCase());
+                coachEl.textContent = myBatch?.coachId?.name || 'Not yet assigned';
+            } catch (err) {
+                console.error('Error loading coach:', err);
+                coachEl.textContent = '—';
+            }
+        }
+
+        function capitalise(str) {
+            return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+        function formatJoined(iso) {
+            if (!iso) return 'N/A';
+            return new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // Batch Change Request — button, modal, and chat thread
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        let bcCurrentRequest = null;   // the athlete's own latest/pending request, if any
+        let bcAllBatches = [];         // cached batch list for the target dropdown
+        let chatPollTimer = null;
+
+        async function setupBatchChangeUI(user) {
+            await refreshBatchChangeStatus(user);
+        }
+
+        async function refreshBatchChangeStatus(user) {
+            const actionWrap = document.getElementById('batchChangeActionWrap');
+            const statusRow = document.getElementById('batchChangeStatusRow');
+            if (!actionWrap || !statusRow) return;
+
+            try {
+                const res = await fetch(`${API}/batch-change-requests/my`, { headers: authHeaders() });
+                const requests = res.ok ? await res.json() : [];
+                const pending = (Array.isArray(requests) ? requests : []).find(r => r.status === 'pending');
+                bcCurrentRequest = pending || (requests[0] || null);
+
+                if (pending) {
+                    actionWrap.innerHTML = `<button class="btn-icon" id="bcViewBtn">💬 View Request</button>`;
+                    statusRow.innerHTML = `<span class="bc-badge pending">Pending — awaiting coach response</span>`;
+                    document.getElementById('bcViewBtn').addEventListener('click', () => openChatModal(pending._id));
+                } else {
+                    actionWrap.innerHTML = `<button class="btn-icon" id="bcOpenBtn">🔁 Request Batch Change</button>`;
+                    statusRow.innerHTML = '';
+                    document.getElementById('bcOpenBtn').addEventListener('click', openBatchChangeModal);
+                }
+            } catch (err) {
+                console.error('Error checking batch change status:', err);
+                actionWrap.innerHTML = `<button class="btn-icon" id="bcOpenBtn">🔁 Request Batch Change</button>`;
+                document.getElementById('bcOpenBtn').addEventListener('click', openBatchChangeModal);
+            }
+        }
+
+        async function openBatchChangeModal() {
+            const modal = document.getElementById('batchChangeModal');
+            const select = document.getElementById('bcTargetBatch');
+            const reasonBox = document.getElementById('bcReason');
+            const user = getUser();
+
+            select.innerHTML = `<option value="">Loading batches…</option>`;
+            reasonBox.value = '';
+            modal.classList.add('open');
+
+            try {
+                const res = await fetch(`${API}/batches`, { headers: authHeaders() });
+                bcAllBatches = res.ok ? await res.json() : [];
+                const others = bcAllBatches.filter(
+                    b => (b.name || '').toLowerCase() !== (user.batchAssigned || '').toLowerCase()
+                );
+                select.innerHTML = others.length
+                    ? `<option value="">Select a batch…</option>` +
+                    others.map(b => `<option value="${b._id}">${b.name}${b.coachId?.name ? ` · Coach ${b.coachId.name}` : ''}</option>`).join('')
+                    : `<option value="">No other batches available</option>`;
+            } catch (err) {
+                console.error('Error loading batches for change request:', err);
+                select.innerHTML = `<option value="">Failed to load batches</option>`;
+            }
+        }
+
+        function closeBatchChangeModal() {
+            document.getElementById('batchChangeModal').classList.remove('open');
+        }
+
+        async function submitBatchChangeRequest() {
+            const targetBatchId = document.getElementById('bcTargetBatch').value;
+            const message = document.getElementById('bcReason').value.trim();
+            const submitBtn = document.getElementById('bcSubmitBtn');
+
+            if (!targetBatchId) { showToast('Please select a target batch', 'error'); return; }
+            if (!message) { showToast('Please add a short reason', 'error'); return; }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending…';
+            try {
+                const res = await fetch(`${API}/batch-change-requests`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ targetBatchId, message }),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showToast(data.message || 'Failed to send request', 'error');
+                    return;
+                }
+                showToast('Request sent to your coaches');
+                closeBatchChangeModal();
+                await refreshBatchChangeStatus(getUser());
+            } catch (err) {
+                console.error('Error submitting batch change request:', err);
+                showToast('Network error', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Request';
+            }
+        }
+
+        // ── Chat thread ──────────────────────────────────────────────────────────
+
+        async function openChatModal(requestId) {
+            const modal = document.getElementById('chatModal');
+            modal.dataset.requestId = requestId;
+            modal.classList.add('open');
+            await loadChatThread(requestId);
+
+            clearInterval(chatPollTimer);
+            chatPollTimer = setInterval(() => loadChatThread(requestId), 8000);
+        }
+
+        function closeChatModal() {
+            document.getElementById('chatModal').classList.remove('open');
+            clearInterval(chatPollTimer);
+        }
+
+        async function loadChatThread(requestId) {
+            const user = getUser();
+            const titleEl = document.getElementById('chatModalTitle');
+            const messagesEl = document.getElementById('chatMessages');
+            const inputWrap = document.getElementById('chatInputWrap');
+            const resolvedNote = document.getElementById('chatResolvedNote');
+
+            try {
+                const res = await fetch(`${API}/batch-change-requests/${requestId}`, { headers: authHeaders() });
+                if (!res.ok) return;
+                const request = await res.json();
+
+                titleEl.textContent = `${request.currentBatchId?.name || '—'} → ${request.targetBatchId?.name || '—'}`;
+
+                messagesEl.innerHTML = (request.messages || []).map(m => {
+                    const mine = String(m.senderId?._id || m.senderId) === String(user.id || user._id);
+                    const senderLabel = mine ? 'You' : (m.senderId?.name || capitalise(m.senderRole || ''));
+                    return `
+                        <div class="chat-bubble ${mine ? 'mine' : 'theirs'}">
+                            <div class="chat-meta">${senderLabel}</div>
+                            <div>${m.text}</div>
+                        </div>`;
+                }).join('');
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+
+                if (request.status !== 'pending') {
+                    inputWrap.style.display = 'none';
+                    resolvedNote.style.display = 'block';
+                    resolvedNote.textContent = request.status === 'approved'
+                        ? '✅ This request was approved — you have been moved to the new batch.'
+                        : '❌ This request was rejected.';
+                    clearInterval(chatPollTimer);
+                    await refreshBatchChangeStatus(user);
+                } else {
+                    inputWrap.style.display = 'flex';
+                    resolvedNote.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Error loading chat thread:', err);
+            }
+        }
+
+        async function sendChatMessage() {
+            const modal = document.getElementById('chatModal');
+            const requestId = modal.dataset.requestId;
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.disabled = true;
+            try {
+                const res = await fetch(`${API}/batch-change-requests/${requestId}/messages`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ text }),
+                });
+                if (res.ok) {
+                    input.value = '';
+                    await loadChatThread(requestId);
+                } else {
+                    const data = await res.json();
+                    showToast(data.message || 'Failed to send message', 'error');
+                }
+            } catch (err) {
+                console.error('Error sending chat message:', err);
+            } finally {
+                input.disabled = false;
+                input.focus();
+            }
+        }
+
+        // Modal wiring (safe even before the athlete-only elements exist)
+        document.getElementById('bcModalCloseBtn')?.addEventListener('click', closeBatchChangeModal);
+        document.getElementById('bcCancelBtn')?.addEventListener('click', closeBatchChangeModal);
+        document.getElementById('bcSubmitBtn')?.addEventListener('click', submitBatchChangeRequest);
+        document.getElementById('batchChangeModal')?.addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeBatchChangeModal();
+        });
+
+        document.getElementById('chatModalCloseBtn')?.addEventListener('click', closeChatModal);
+        document.getElementById('chatModal')?.addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeChatModal();
+        });
+        document.getElementById('chatSendBtn')?.addEventListener('click', sendChatMessage);
+        document.getElementById('chatInput')?.addEventListener('keydown', e => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+
+        // ─── Edit mode ────────────────────────────────────────────────────────────────
+        const personalCard = document.getElementById('personalCard');
+        const editBtn = document.getElementById('editBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        function enterEditMode() {
+            personalCard.classList.add('editing');
+            editBtn.style.display = 'none';
+            saveBtn.style.display = '';
+            cancelBtn.style.display = '';
+            document.getElementById('editName').focus();
+        }
+
+        function exitEditMode() {
+            personalCard.classList.remove('editing');
+            editBtn.style.display = '';
+            saveBtn.style.display = 'none';
+            cancelBtn.style.display = 'none';
+        }
+
+        editBtn.addEventListener('click', enterEditMode);
+
+        cancelBtn.addEventListener('click', () => {
+            // Restore inputs to current saved values then exit
+            const user = getUser();
+            document.getElementById('editName').value = user?.name || '';
+            document.getElementById('editEmail').value = user?.email || '';
+            exitEditMode();
+        });
+
+        saveBtn.addEventListener('click', async () => {
+            const name = document.getElementById('editName').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            const bloodGroup = document.getElementById('editBloodGroup').value.trim();
+            const emergencyContact = document.getElementById('editEmergencyContact').value.trim();
+
+            if (!name || !email) {
+                showToast('Name and email cannot be empty.', 'error'); return;
+            }
+
+            saveBtn.textContent = 'Saving…';
+            saveBtn.disabled = true;
+
+            try {
+                const res = await fetch(`${API}/auth/profile`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({ name, email, phone, bloodGroup, emergencyContact })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showToast(data.message || 'Update failed.', 'error');
+                } else {
+                    saveUser(data);
+                    renderUser({ ...getUser(), ...data });
+                    exitEditMode();
+                    showToast('Profile updated ✓');
+                }
+            } catch {
+                showToast('Network error. Try again.', 'error');
+            } finally {
+                saveBtn.textContent = 'Save';
+                saveBtn.disabled = false;
+            }
+        });
+
+        // ─── Profile picture upload ───────────────────────────────────────────────────
+        const avatarWrap = document.getElementById('avatarWrap');
+        const photoInput = document.getElementById('photoInput');
+        const photoBar = document.getElementById('photoBar');
+        const photoPreview = document.getElementById('photoPreview');
+        const photoFileName = document.getElementById('photoFileName');
+        const savePhotoBtn = document.getElementById('savePhotoBtn');
+        const cancelPhotoBtn = document.getElementById('cancelPhotoBtn');
+
+        let pendingPhotoB64 = null;
+
+        avatarWrap.addEventListener('click', () => photoInput.click());
+
+        photoInput.addEventListener('change', () => {
+            const file = photoInput.files[0];
+            if (!file) return;
+
+            // Client-side size guard — 2MB feels comfortable
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('Photo must be under 2 MB.', 'error');
+                photoInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                pendingPhotoB64 = e.target.result;           // base64 data URL
+                photoPreview.src = pendingPhotoB64;
+                photoFileName.textContent = file.name;
+                photoBar.style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        cancelPhotoBtn.addEventListener('click', () => {
+            pendingPhotoB64 = null;
+            photoInput.value = '';
+            photoBar.style.display = 'none';
+        });
+
+        savePhotoBtn.addEventListener('click', async () => {
+            if (!pendingPhotoB64) return;
+
+            savePhotoBtn.textContent = 'Saving…';
+            savePhotoBtn.disabled = true;
+
+            try {
+                const res = await fetch(`${API}/auth/profile-picture`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({ profilePicture: pendingPhotoB64 })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showToast(data.message || 'Upload failed.', 'error');
+                } else {
+                    saveUser(data);
+                    renderUser({ ...getUser(), ...data });
+                    photoBar.style.display = 'none';
+                    pendingPhotoB64 = null;
+                    photoInput.value = '';
+                    showToast('Photo updated ✓');
+                }
+            } catch {
+                showToast('Network error. Try again.', 'error');
+            } finally {
+                savePhotoBtn.textContent = 'Save Photo';
+                savePhotoBtn.disabled = false;
+            }
+        });
+
+        // ─── Boot ─────────────────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = getUser();
+            if (!user || !getToken()) { window.location.href = 'login.html'; return; }
+
+            // Date header
+            const now = new Date();
+            document.getElementById('pageDate').textContent =
+                `${now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()} · ` +
+                `${now.getDate()} ${now.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()}`;
+
+            // Render from localStorage immediately so the page isn't blank
+            renderUser(user);
+
+            // Then fetch fresh data from /api/auth/me to catch any server-side changes
+            try {
+                const res = await fetch(`${API}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                if (res.ok) {
+                    const fresh = await res.json();
+                    saveUser(fresh);
+                    renderUser({ ...user, ...fresh });
+                }
+            } catch { /* offline — localStorage render is good enough */ }
+        });
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('SW registered'))
+                .catch(err => console.log('SW failed:', err));
+        }
+    </script>
+</body>
+
+</html>

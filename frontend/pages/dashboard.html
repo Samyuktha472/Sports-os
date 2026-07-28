@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports OS - Dashboard</title>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/sidebar.css?v=3">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <style>
+        .dashboard-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Remove gradients from KPI cards as requested */
+        .dashboard-card.blue,
+        .dashboard-card.green,
+        .dashboard-card.orange,
+        .dashboard-card.purple {
+            background: var(--color-white) !important;
+            color: var(--color-dark) !important;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-card h4,
+        .dashboard-card p {
+            color: var(--color-muted) !important;
+        }
+
+        .dashboard-card h2 {
+            color: var(--color-dark) !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="sidebar"></div>
+
+    <div class="main-content">
+        <div style="padding:10px 20px;">
+            <h2 id="academyName"
+                style="margin:0; font-size:26px; color:var(--color-accent); font-weight:800; letter-spacing:0.3px;">
+                Loading Academy...
+            </h2>
+        </div>
+        <header class="page-header">
+            <div>
+                <p class="page-meta" id="pageDate">MONDAY · 15 JUNE</p>
+                <h1 class="page-title">Good morning, <span id="greetingName"></span>.</h1>
+                <p class="page-subtitle">Here is what is happening at the academy today.</p>
+            </div>
+            <div class="page-context">Field Mode · Tablet ready</div>
+        </header>
+
+        <!-- Athlete Only Top Row -->
+        <div class="athlete-grid-2" id="athleteTopRow" style="display:none; margin-bottom: 24px;">
+            <div class="card athlete-profile-card">
+                <div class="athlete-avatar-lg" id="athleteAvatar">??</div>
+                <div>
+                    <h3 id="athleteProfileName">Athlete Name</h3>
+                    <p id="athleteProfileMeta" style="color:var(--color-muted); font-size:13px;">Loading...</p>
+                </div>
+            </div>
+            <div class="card" style="display:flex; align-items:center; gap:20px;">
+                <div style="font-size:32px;">🔥</div>
+                <div>
+                    <h3 id="streakValue" style="margin:0 0 4px;">0 days</h3>
+                    <p style="margin:0; font-size:13px; color:var(--color-muted);">Log in daily to build your streak.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-container">
+            <!-- KPI Cards -->
+            <div class="dashboard-cards role-restricted" style="margin-bottom: 24px;">
+                <div class="dashboard-card blue">
+                    <h4>Total Athletes</h4>
+                    <h2 id="totalAthletes">0</h2>
+                    <p>Registered Players</p>
+                </div>
+                <div class="dashboard-card green" onclick="window.location.href='batches.html'" style="cursor:pointer;">
+                    <h4>Today's Attendance</h4>
+                    <h2 id="presentToday">0</h2>
+                    <p id="presentTodaySub">Present Today</p>
+                </div>
+                <div class="dashboard-card orange" onclick="window.location.href='resources.html'"
+                    style="cursor:pointer;">
+                    <h4>Equipment</h4>
+                    <h2 id="equipmentCount">0</h2>
+                    <p>Available Items</p>
+                </div>
+                <div class="dashboard-card purple">
+                    <h4>Upcoming Matches</h4>
+                    <h2 id="matchCount">0</h2>
+                    <p>Scheduled</p>
+                </div>
+            </div>
+
+            <!-- Row 1: Planned Session & Announcements (Requested Layout) -->
+            <div class="dashboard-grid-2">
+
+
+                <div class="card workload-card">
+                    <div class="card-header">
+                        <h3>📢 Announcements</h3>
+                        <button type="button" id="addAnnouncementBtn" class="text-link"
+                            style="border:none;background:none;cursor:pointer;">+ Add</button>
+                    </div>
+                    <div id="announcementList" class="card-subtext" style="max-height: 250px; overflow-y: auto;">Loading
+                        announcements...</div>
+                </div>
+            </div>
+
+            <!-- Row 2: Attendance Summary & Practice Sessions -->
+            <div class="dashboard-grid-2">
+                <div class="card attendance-summary-card">
+                    <div class="card-header">
+                        <h3>📋 Attendance Summary</h3>
+                    </div>
+                    <div class="stats-grid" id="attendanceSummaryStats"></div>
+                    <p id="attendanceSummarySub" class="card-subtext" style="margin-top: 12px;"></p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📅 Practice Sessions</h3>
+                    </div>
+                    <div class="practice-list" id="practiceList"></div>
+                </div>
+            </div>
+
+            <!-- Row 3: Equipment Status & Invite Link -->
+            <div class="dashboard-grid-2">
+                <div class="card equipment-card">
+                    <div class="card-header">
+                        <h3>⚙ Equipment Status</h3>
+                        <a href="resources.html" class="text-link">Manage →</a>
+                    </div>
+                    <div class="stats-grid" id="equipmentStats"></div>
+                </div>
+
+                <article class="card" id="inviteCard" style="display:none;">
+                    <div class="card-header">
+                        <h3>Invite a teammate</h3>
+                    </div>
+                    <div class="form-group">
+                        <label for="inviteEmail">Email (or mobile number below)</label>
+                        <input type="email" id="inviteEmail" class="form-control" placeholder="teammate@example.com"
+                            style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="inviteMobile">Mobile Number (or email above)</label>
+                        <input type="tel" id="inviteMobile" class="form-control" placeholder="10-digit mobile number"
+                            maxlength="10" pattern="[0-9]{10}" inputmode="numeric"
+                            style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;">
+                    </div>
+                    <div class="form-group"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                        <div>
+                            <label for="inviteRole">Role</label>
+                            <select id="inviteRole" class="form-control"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"></select>
+                        </div>
+                        <div>
+                            <label for="inviteSport">Sport</label>
+                            <select id="inviteSport" class="form-control"
+                                style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px;"></select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="display:flex;gap:10px;align-items:center;margin-top:15px;">
+                        <button type="button" id="inviteCreateBtn" class="btn-primary">Create Invite Link</button>
+                        <button type="button" id="copyInviteLinkBtn" class="btn-secondary"
+                            style="display:none;">Copy</button>
+                    </div>
+                    <div id="inviteFeedback" class="card-subtext" style="margin-top:8px;min-height:18px;"></div>
+                    <input id="inviteLink" readonly
+                        style="width:100%;padding:10px;border:1px solid #E5E7EB;border-radius:10px;display:none;background:#F9FAFB;font-size:12px;margin-top:10px;">
+                </article>
+            </div>
+
+        </div> <!-- end dashboard-container -->
+    </div> <!-- end main-content -->
+
+    <script src="../js/sidebar.js?v=4"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/dashboard.js?v=16"></script>
+
+    <!-- Announcement Modal -->
+    <div id="announcementModalOverlay"
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+        <div class="card" style="max-width:400px;width:90%;">
+            <div class="card-header">
+                <h3>Create Announcement</h3>
+                <button type="button" id="announcementModalCloseBtn" class="text-link"
+                    style="border:none;background:none;cursor:pointer;font-size:18px;">✕</button>
+            </div>
+            <div class="form-group" style="margin-bottom:15px;">
+                <label for="announcementTitle" style="display:block;margin-bottom:5px;font-weight:600;">Title</label>
+                <input type="text" id="announcementTitle" class="form-control" placeholder="e.g. Holiday Notice"
+                    style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+            </div>
+            <div class="form-group" style="margin-bottom:15px;">
+                <label for="announcementMessage"
+                    style="display:block;margin-bottom:5px;font-weight:600;">Message</label>
+                <textarea id="announcementMessage" class="form-control" rows="3" placeholder="Announcement details..."
+                    style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;resize:none;"></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom:15px;">
+                <label for="announcementSport" style="display:block;margin-bottom:5px;font-weight:600;">For
+                    Sport</label>
+                <select id="announcementSport" class="form-control"
+                    style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+                    <option value="all">All Sports</option>
+                    <option value="cricket">Cricket</option>
+                    <option value="tennis">Tennis</option>
+                    <option value="kabaddi">Kabaddi</option>
+                </select>
+            </div>
+            <div id="announcementModalFeedback" class="card-subtext"
+                style="min-height:20px; color: var(--color-danger); margin-bottom:15px;"></div>
+            <div class="form-group" style="display:flex;gap:10px;">
+                <button type="button" id="announcementCreateBtn" class="btn-primary" style="flex:1;">Post</button>
+                <button type="button" id="announcementModalCancelBtn" class="btn-secondary"
+                    style="flex:1;">Cancel</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

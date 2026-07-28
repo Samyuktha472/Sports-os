@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports OS - Resource Management</title>
+
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/sidebar.css?v=3">
+    <link rel="stylesheet" href="../css/resources.css">
+</head>
+
+<body>
+
+    <div id="sidebar"></div>
+
+    <div class="main-content">
+
+        <header class="page-header">
+            <div>
+                <p class="page-meta" id="pageDate">TUESDAY · 16 JUNE</p>
+                <h1 class="page-title">Resource Management</h1>
+                <p class="page-subtitle">
+                    Facilities, equipment and academy resources — all in one place.
+                </p>
+            </div>
+
+            <div class="page-context">
+                Field Mode · Tablet ready
+            </div>
+        </header>
+
+        <div class="resources-grid">
+
+            <div class="left-column">
+
+                <!-- Facility Section -->
+                <section class="facility-card">
+
+                    <div class="section-header">
+
+                        <div>
+                            <h2>📍 Facility Allocation</h2>
+                        </div>
+
+                        <div>
+                            <button class="primary-btn" id="addFacilityBtn">
+    + Add Facility
+</button>
+                        </div>
+
+                    </div>
+
+                    <!-- Add Facility Form -->
+                <div id="facilityForm" class="resource-form" style="display:none;">
+
+    <input
+        type="text"
+        id="facilityName"
+        placeholder="Facility Name">
+
+    <select id="facilityType">
+        <option value="">Select Facility Type</option>
+        <option>Net</option>
+        <option>Ground</option>
+        <option>Gym</option>
+        <option>Indoor</option>
+    </select>
+
+    <input
+        type="text"
+        id="facilityLocation"
+        placeholder="Location">
+
+    <div class="form-actions">
+
+        <button id="saveFacility" class="primary-btn">
+            Save
+        </button>
+
+        <button
+            type="button"
+            id="cancelFacility"
+            class="secondary-btn">
+
+            Cancel
+
+        </button>
+
+    </div>
+
+</div>
+
+                    <!-- Facility Cards -->
+                    <div class="facility-grid" id="facilityGrid"></div>
+
+                </section>
+
+                <!-- Equipment -->
+<div class="equipment-card-container">
+
+    <div class="equipment-header">
+        <h2>👜 Equipment Inventory</h2>
+
+        <div class="equipment-actions">
+            <button id="addEquipmentBtn" class="btn-primary">
+                + Add Equipment
+            </button>
+            <span>Tap +/- to adjust stock</span>
+        </div>
+    </div>
+
+    <div class="equipment-grid" id="equipmentGrid"></div>
+
+</div>
+    <!-- Add Equipment Form -->
+  <div id="equipmentForm" class="resource-form" style="display:none;">
+
+    <input
+        type="text"
+        id="equipmentName"
+        placeholder="Equipment Name">
+
+    <select id="equipmentCategory">
+        <option value="">Category</option>
+        <option>Ball</option>
+        <option>Bat</option>
+        <option>Stumps</option>
+        <option>Cones</option>
+        <option>Machine</option>
+        <option>Other</option>
+    </select>
+
+    <select id="equipmentCondition">
+        <option>Excellent</option>
+        <option>Good</option>
+        <option>Fair</option>
+    </select>
+
+    <input
+        type="number"
+        id="equipmentQty"
+        placeholder="Quantity">
+
+    <div class="form-actions">
+
+        <button id="saveEquipment" class="primary-btn">
+            Save
+        </button>
+
+        <button
+            type="button"
+            id="cancelEquipment"
+            class="secondary-btn">
+
+            Cancel
+
+        </button>
+
+    </div>
+
+</div>
+</section>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <button id="addResourceBtn" class="btn-primary">+ Add Equipment</button>
+
+<div id="resourceForm" style="display:none;" class="resource-modal">
+    <form id="resourceFormSubmit" class="resource-form">
+
+        <label>Equipment Name</label>
+        <input type="text" id="resourceName" required>
+
+        <label>Category</label>
+        <select id="resourceType">
+            <option value="Bat">Bat</option>
+            <option value="Ball">Ball</option>
+            <option value="Cone">Cone</option>
+            <option value="Jersey">Jersey</option>
+            <option value="Racket">Racket</option>
+            <option value="Mat">Mat</option>
+        </select>
+
+        <label>Description</label>
+        <textarea id="resourceDescription"></textarea>
+
+        <label>Image URL</label>
+        <input type="text" id="resourceURL">
+
+        <label>Quantity</label>
+        <input type="number" id="resourceQuantity" value="1" min="0">
+
+        <div style="margin-top:15px;">
+            <button type="submit" class="btn-primary">Save</button>
+            <button type="button" id="cancelResourceBtn">Cancel</button>
+        </div>
+
+    </form>
+</div>
+
+    <script src="../js/sidebar.js?v=4"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/resources.js"></script>
+
+    <script>
+
+        (function () {
+
+            const allowedRoles = ['owner', 'head_coach', 'coach'];
+
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+            const role = user?.role;
+
+            if (!user || !role) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (!allowedRoles.includes(role)) {
+                window.location.href =
+                    role === 'athlete'
+                        ? 'performance.html'
+                        : 'dashboard.html';
+            }
+
+        })();
+
+        if ('serviceWorker' in navigator) {
+
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('SW registered'))
+                .catch(err => console.log('SW failed:', err));
+
+        }
+
+    </script>
+
+</body>
+
+</html>
